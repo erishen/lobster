@@ -121,7 +121,39 @@ PYTHONPATH=src python -m lobster config set default_model ollama/gemma3
 PYTHONPATH=src python -m lobster config get default_model
 ```
 
-### 6. 批量处理
+### 6. 记忆管理 (OpenClaw Memory)
+
+**添加记忆**
+```bash
+PYTHONPATH=src python -m lobster memory add "OpenClaw 是一个 AI 助手项目" -t project -t openclaw
+```
+
+**列出所有记忆**
+```bash
+PYTHONPATH=src python -m lobster memory list
+```
+
+**搜索记忆**
+```bash
+PYTHONPATH=src python -m lobster memory search "OpenClaw"
+```
+
+**查看记忆统计**
+```bash
+PYTHONPATH=src python -m lobster memory stats
+```
+
+**删除记忆**
+```bash
+PYTHONPATH=src python -m lobster memory delete <memory_id>
+```
+
+**清空所有记忆**
+```bash
+PYTHONPATH=src python -m lobster memory clear
+```
+
+### 7. 批量处理
 
 **批量分割文档**
 ```bash
