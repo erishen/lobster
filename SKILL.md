@@ -48,6 +48,54 @@ PYTHONPATH=src python -m lobster llm models
 PYTHONPATH=src python -m lobster llm stream "讲个故事" --model ollama/gemma3
 ```
 
+### 1.5. 交互式对话（新增）
+
+**启动交互式聊天**
+```bash
+PYTHONPATH=src python -m lobster chat -i
+```
+
+**记忆增强对话**
+```bash
+PYTHONPATH=src python -m lobster chat -i --with-memory
+```
+
+**指定模型**
+```bash
+PYTHONPATH=src python -m lobster chat -i -m ollama/llama3.1:8b
+```
+
+**交互命令**
+- `quit` 或 `exit` - 退出对话
+- `clear` - 清空对话历史
+
+### 1.6. 对话历史管理（新增）
+
+**列出所有对话**
+```bash
+PYTHONPATH=src python -m lobster history list
+```
+
+**查看特定对话**
+```bash
+PYTHONPATH=src python -m lobster history show 1
+```
+
+**导出对话为 Markdown**
+```bash
+PYTHONPATH=src python -m lobster history export 1 conversation.md
+```
+
+**删除对话**
+```bash
+PYTHONPATH=src python -m lobster history delete 1
+```
+
+**清空所有历史**
+```bash
+PYTHONPATH=src python -m lobster history clear
+```
+
 ### 2. 文档处理
 
 **加载文档**
