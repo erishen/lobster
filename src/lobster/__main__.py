@@ -12,7 +12,7 @@ console = Console()
 @click.version_option(version=VERSION, prog_name="lobster")
 def cli():
     """🦞 Lobster - OpenClaw Assistant CLI Tool
-    
+
     A modern, extensible command-line interface for the OpenClaw Lobster Assistant service.
     """
     pass
@@ -32,23 +32,25 @@ def status():
 
 
 @cli.command()
-@click.argument('message')
+@click.argument("message")
 def chat(message):
     """Send a message to the OpenClaw assistant"""
     console.print(f"[bold blue]Sending message to OpenClaw:[/] {message}")
-    console.print(f"[bold green]Assistant response:[/] Hello! I'm Lobster, your assistant. (mock response)")
+    console.print(
+        "[bold green]Assistant response:[/] Hello! I'm Lobster, your assistant. (mock response)"
+    )
 
 
-from lobster.commands.document import doc
-from lobster.commands.llm import llm
-from lobster.commands.rag import rag
-from lobster.commands.config_cmd import config_cmd
-from lobster.commands.batch import batch
-from lobster.commands.plugin_cmd import plugin
-from lobster.commands.util import util
-from lobster.commands.model import model
-from lobster.commands.template import template
-from lobster.commands.doctor import doctor
+from lobster.commands.document import doc  # noqa: E402
+from lobster.commands.llm import llm  # noqa: E402
+from lobster.commands.rag import rag  # noqa: E402
+from lobster.commands.config_cmd import config_cmd  # noqa: E402
+from lobster.commands.batch import batch  # noqa: E402
+from lobster.commands.plugin_cmd import plugin  # noqa: E402
+from lobster.commands.util import util  # noqa: E402
+from lobster.commands.model import model  # noqa: E402
+from lobster.commands.template import template  # noqa: E402
+from lobster.commands.doctor import doctor  # noqa: E402
 
 cli.add_command(doc)
 cli.add_command(llm)
