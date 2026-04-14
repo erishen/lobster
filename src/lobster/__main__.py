@@ -219,6 +219,9 @@ from lobster.commands.shortcut import ask, query, remember, recall, status as sh
 from lobster.commands.openclaw_cmd import openclaw  # noqa: E402
 from lobster.commands.code_cmd import code  # noqa: E402
 from lobster.commands.doc_tool_cmd import doc_tool  # noqa: E402
+from lobster.commands.data_cmd import data  # noqa: E402
+from lobster.commands.project_cmd import project  # noqa: E402
+from lobster.commands.util_cmd import util as util_tools  # noqa: E402
 
 # 注册原有命令
 cli.add_command(doc)
@@ -243,6 +246,9 @@ cli.add_command(shortcut_status, name="shortcut-status")
 cli.add_command(openclaw)
 cli.add_command(code)
 cli.add_command(doc_tool)
+cli.add_command(data)
+cli.add_command(project)
+cli.add_command(util_tools, name="util-tools")
 
 
 def main():
