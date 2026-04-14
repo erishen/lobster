@@ -29,18 +29,18 @@ def upload(file_path, vector_store, embedding_type, embedding_model):
         console.print(f"[bold blue]Uploading document to RAG system...[/]")
         console.print(f"[dim]File: {file_path}, Vector Store: {vector_store}, Embedding: {embedding_type}[/]")
         
-        # 加载文档
         loader = DocumentLoader()
         documents = loader.load_document(file_path)
         
-        # 创建 RAG 系统并初始化向量存储
         rag_system = RAGSystem(vector_store_type=vector_store, embedding_type=embedding_type, embedding_model=embedding_model)
         
         with console.status("[bold green]Processing and indexing..."):
             rag_system.create_vector_store(documents)
+            rag_system.save_vector_store(".lobster_vector_store")
         
         console.print(f"[green]✓[/] Document successfully indexed")
         console.print(f"[dim]Vector store type: {vector_store}, Embedding: {embedding_type}[/]")
+        console.print(f"[dim]Vector store saved to: .lobster_vector_store[/]")
         
     except ImportError:
         console.print("[red]Error:[/] langchain-llm-toolkit not installed")
@@ -53,34 +53,42 @@ def upload(file_path, vector_store, embedding_type, embedding_model):
 @click.argument('query')
 @click.option('--k', default=4, help='Number of documents to retrieve')
 @click.option('--vector-store', type=click.Choice(['faiss', 'qdrant']), default='faiss', help='Vector store type')
-@click.option('--model', default='ollama/gemma3', help='Model for answer generation')
-def query(query, k, vector_store, model):
+@click.option('--embedding-type', type=click.Choice(['openai', 'ollama']), default='ollama', help='Embedding type')
+@click.option('--embedding-model', default='nomic-embed-text', help='Embedding model (for Ollama)')
+@click.option('--model', default='ollama/gemma3', help='LLM model for answer generation')
+def query(query, k, vector_store, embedding_type, embedding_model, model):
     """Query the RAG system"""
     try:
         from langchain_llm_toolkit import RAGSystem
+        from pathlib import Path
         
         console.print(f"[bold blue]Querying RAG system...[/]")
         console.print(f"[dim]Query: {query}[/]")
         
-        rag_system = RAGSystem(vector_store_type=vector_store)
+        rag_system = RAGSystem(vector_store_type=vector_store, embedding_type=embedding_type, embedding_model=embedding_model, llm_model=model)
+        
+        vector_store_path = Path(".lobster_vector_store")
+        if not vector_store_path.exists():
+            console.print("[red]Error:[/] No vector store found. Please upload documents first using 'lobster rag upload'")
+            return
+        
+        rag_system.load_vector_store(str(vector_store_path))
         
         with console.status("[bold green]Searching and generating answer..."):
-            result = rag_system.query(query, k=k)
+            answer, relevant_docs = rag_system.generate_answer(query, k=k)
         
-        console.print(Panel(result['answer'], title="[bold green]Answer[/]", border_style="green"))
+        console.print(Panel(answer, title="[bold green]Answer[/]", border_style="green"))
         
-        if result.get('sources'):
+        if relevant_docs:
             console.print("\n[bold yellow]Sources:[/]")
             
             table = Table()
             table.add_column("Index", style="cyan")
             table.add_column("Content Preview", style="green")
-            table.add_column("Score", style="yellow")
             
-            for i, source in enumerate(result['sources'][:3]):
-                preview = source['content'][:100] + "..." if len(source['content']) > 100 else source['content']
-                score = f"{source.get('score', 0):.3f}"
-                table.add_row(str(i), preview, score)
+            for i, doc in enumerate(relevant_docs[:3]):
+                preview = doc.page_content[:100] + "..." if len(doc.page_content) > 100 else doc.page_content
+                table.add_row(str(i), preview)
             
             console.print(table)
         
@@ -94,18 +102,29 @@ def query(query, k, vector_store, model):
 @rag.command()
 @click.argument('query')
 @click.option('--k', default=4, help='Number of documents to retrieve')
-def search(query, k):
+@click.option('--vector-store', type=click.Choice(['faiss', 'qdrant']), default='faiss', help='Vector store type')
+@click.option('--embedding-type', type=click.Choice(['openai', 'ollama']), default='ollama', help='Embedding type')
+@click.option('--embedding-model', default='nomic-embed-text', help='Embedding model (for Ollama)')
+def search(query, k, vector_store, embedding_type, embedding_model):
     """Search for similar documents without generating answer"""
     try:
         from langchain_llm_toolkit import RAGSystem
+        from pathlib import Path
         
         console.print(f"[bold blue]Searching for similar documents...[/]")
         console.print(f"[dim]Query: {query}, k={k}[/]")
         
-        rag_system = RAGSystem()
+        rag_system = RAGSystem(vector_store_type=vector_store, embedding_type=embedding_type, embedding_model=embedding_model)
+        
+        vector_store_path = Path(".lobster_vector_store")
+        if not vector_store_path.exists():
+            console.print("[red]Error:[/] No vector store found. Please upload documents first using 'lobster rag upload'")
+            return
+        
+        rag_system.load_vector_store(str(vector_store_path))
         
         with console.status("[bold green]Searching..."):
-            results = rag_system.similarity_search(query, k=k)
+            results = rag_system.retrieve_documents(query, k=k)
         
         if not results:
             console.print("[yellow]No similar documents found[/]")
@@ -134,18 +153,35 @@ def search(query, k):
 
 @rag.command()
 @click.argument('query')
-def summarize(query):
+@click.option('--k', default=4, help='Number of documents to retrieve')
+@click.option('--vector-store', type=click.Choice(['faiss', 'qdrant']), default='faiss', help='Vector store type')
+@click.option('--embedding-type', type=click.Choice(['openai', 'ollama']), default='ollama', help='Embedding type')
+@click.option('--embedding-model', default='nomic-embed-text', help='Embedding model (for Ollama)')
+@click.option('--model', default='ollama/gemma3', help='LLM model for summarization')
+def summarize(query, k, vector_store, embedding_type, embedding_model, model):
     """Generate a summary from retrieved documents"""
     try:
         from langchain_llm_toolkit import RAGSystem
+        from pathlib import Path
         
         console.print(f"[bold blue]Generating summary...[/]")
         console.print(f"[dim]Query: {query}[/]")
         
-        rag_system = RAGSystem()
+        rag_system = RAGSystem(vector_store_type=vector_store, embedding_type=embedding_type, embedding_model=embedding_model, llm_model=model)
+        
+        vector_store_path = Path(".lobster_vector_store")
+        if not vector_store_path.exists():
+            console.print("[red]Error:[/] No vector store found. Please upload documents first using 'lobster rag upload'")
+            return
+        
+        rag_system.load_vector_store(str(vector_store_path))
         
         with console.status("[bold green]Retrieving and summarizing..."):
-            summary = rag_system.generate_summary(query)
+            documents = rag_system.retrieve_documents(query, k=k)
+            if not documents:
+                console.print("[yellow]No documents found for the query[/]")
+                return
+            summary = rag_system.generate_summary(documents)
         
         console.print(Panel(summary, title="[bold green]Summary[/]", border_style="green"))
         
