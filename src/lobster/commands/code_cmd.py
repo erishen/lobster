@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from pathlib import Path
 
-from langchain_llm_toolkit import LLMIntegration
+from lobster.core.llm_client import get_llm_client
 from lobster.core.config import ConfigManager
 
 console = Console()
@@ -40,7 +40,7 @@ def review(file_path, model):
     syntax = Syntax(code_content, "python", theme="monokai", line_numbers=True)
     console.print(syntax)
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请审查以下代码，指出潜在问题和改进建议：
@@ -86,7 +86,7 @@ def explain(file_path, model):
     syntax = Syntax(code_content, "python", theme="monokai", line_numbers=True)
     console.print(syntax)
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请解释以下代码的功能：
@@ -128,7 +128,7 @@ def refactor(file_path, model, focus):
     with open(file_path, 'r') as f:
         code_content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     focus_prompts = {
@@ -177,7 +177,7 @@ def test(file_path, language, model):
     with open(file_path, 'r') as f:
         code_content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请为以下 {language} 代码生成单元测试：
@@ -219,7 +219,7 @@ def translate(file_path, target_language, model):
     with open(file_path, 'r') as f:
         code_content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请将以下代码翻译为 {target_language}：
@@ -259,7 +259,7 @@ def document(file_path, model):
     with open(file_path, 'r') as f:
         code_content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请为以下代码生成文档：
