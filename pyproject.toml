@@ -34,6 +34,9 @@ dev = [
     "flake8>=6.0.0",
     "mypy>=1.0.0",
 ]
+web = [
+    "streamlit>=1.30.0",
+]
 
 [project.scripts]
 lobster = "lobster.__main__:main"

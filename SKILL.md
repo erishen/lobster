@@ -96,6 +96,29 @@ PYTHONPATH=src python -m lobster history delete 1
 PYTHONPATH=src python -m lobster history clear
 ```
 
+### 1.7. Web UI 界面（新增）
+
+**启动 Web UI**
+```bash
+PYTHONPATH=src python -m lobster web
+```
+
+**指定端口和主机**
+```bash
+PYTHONPATH=src python -m lobster web --port 8502 --host 0.0.0.0
+```
+
+**功能说明**
+- 💬 **聊天界面** - 与 OpenClaw 助手对话
+- 🧠 **记忆管理** - 添加、查看、搜索记忆
+- 📜 **历史记录** - 查看对话历史
+- ⚙️ **设置** - 选择模型、启用记忆
+
+**安装依赖**
+```bash
+pip install lobster[web]
+```
+
 ### 2. 文档处理
 
 **加载文档**
