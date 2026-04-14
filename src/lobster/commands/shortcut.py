@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from lobster.core.llm_client import get_llm_client
-from lobster.core.memory_store import MemoryManager
+from lobster.core.memory_store import EnhancedMemoryManager
 from lobster.core.config import ConfigManager
 
 console = Console()
@@ -58,7 +58,7 @@ def query(query_text, k, model):
     console.print(Panel(f"🔍 [bold cyan]{query_text}[/bold cyan]", title="查询", border_style="blue"))
     
     # 使用简单的记忆搜索
-    memory = MemoryManager()
+    memory = EnhancedMemoryManager()
     results = memory.search_memory(query_text, k=k)
     
     if results:
@@ -86,7 +86,7 @@ def remember(content, tags, category):
     console.print(Panel(f"📝 [bold cyan]{content}[/bold cyan]", title="记忆", border_style="blue"))
     
     # 使用简单的记忆存储
-    memory = MemoryManager()
+    memory = EnhancedMemoryManager()
     memory_id = memory.add_memory(
         content=content,
         tags=list(tags),
@@ -110,7 +110,7 @@ def recall(search_text):
     console.print(Panel(f"🧠 [bold cyan]{search_text}[/bold cyan]", title="回忆", border_style="blue"))
     
     # 使用简单的记忆搜索
-    memory = MemoryManager()
+    memory = EnhancedMemoryManager()
     results = memory.search_memory(search_text, k=5)
     
     if results:
@@ -142,7 +142,7 @@ def status():
     console.print(f"  默认模型: {config.get('default_model', '未设置')}")
     
     # 使用简单的记忆管理
-    memory = MemoryManager()
+    memory = EnhancedMemoryManager()
     stats = memory.get_stats()
     
     console.print(f"\n🧠 [bold]记忆统计[/bold]")
