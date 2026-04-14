@@ -55,3 +55,5 @@ Thumbs.db
 test_document.txt
 vector_store/
 qdrant_storage/
+.lobster_memory/
+.lobster_memory_index.json
