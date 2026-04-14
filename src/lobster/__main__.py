@@ -33,12 +33,35 @@ def status():
 
 @cli.command()
 @click.argument("message")
-def chat(message):
+@click.option("--model", "-m", default="ollama/gemma3", help="Model to use")
+def chat(message, model):
     """Send a message to the OpenClaw assistant"""
-    console.print(f"[bold blue]Sending message to OpenClaw:[/] {message}")
-    console.print(
-        "[bold green]Assistant response:[/] Hello! I'm Lobster, your assistant. (mock response)"
-    )
+    try:
+        from langchain_llm_toolkit import LLMIntegration
+
+        console.print(f"[bold blue]Sending message to OpenClaw:[/] {message}")
+
+        llm = LLMIntegration()
+        llm.set_model(model)
+
+        with console.status("[bold green]Thinking..."):
+            response = llm.generate(message)
+
+        console.print(f"[bold green]Assistant response:[/] {response}")
+
+    except ImportError:
+        console.print("[red]Error:[/] langchain-llm-toolkit not installed")
+        console.print("[yellow]Install with:[/] pip install langchain-llm-toolkit")
+        console.print("[yellow]Falling back to mock response...[/]")
+        console.print(
+            "[bold green]Assistant response:[/] Hello! I'm Lobster, your assistant. (mock response)"
+        )
+    except Exception as e:
+        console.print(f"[red]Error:[/] {str(e)}")
+        console.print("[yellow]Falling back to mock response...[/]")
+        console.print(
+            "[bold green]Assistant response:[/] Hello! I'm Lobster, your assistant. (mock response)"
+        )
 
 
 from lobster.commands.document import doc  # noqa: E402
