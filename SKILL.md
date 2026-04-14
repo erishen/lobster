@@ -24,6 +24,97 @@ source .venv/bin/activate
 PYTHONPATH=src python -m lobster <command> [options]
 ```
 
+## 🆕 新增功能
+
+### 快捷命令（推荐使用）
+
+**快速提问**
+```bash
+PYTHONPATH=src python -m lobster ask "什么是 AI?"
+PYTHONPATH=src python -m lobster ask "解释下 Python 装饰器" -m ollama/llama3
+```
+
+**快速查询 RAG**
+```bash
+PYTHONPATH=src python -m lobster query "项目的主要功能是什么?"
+```
+
+**快速记忆**
+```bash
+PYTHONPATH=src python -m lobster remember "OpenClaw 是一个 AI 助手项目" -t project
+```
+
+**快速回忆**
+```bash
+PYTHONPATH=src python -m lobster recall "OpenClaw"
+```
+
+### OpenClaw 管理
+
+**检查状态**
+```bash
+PYTHONPATH=src python -m lobster openclaw status
+```
+
+**启动服务**
+```bash
+PYTHONPATH=src python -m lobster openclaw start --port 8000 --model ollama/gemma3
+```
+
+**查看日志**
+```bash
+PYTHONPATH=src python -m lobster openclaw logs --follow
+```
+
+**与 OpenClaw 对话**
+```bash
+PYTHONPATH=src python -m lobster openclaw chat
+```
+
+### 代码工具
+
+**代码审查**
+```bash
+PYTHONPATH=src python -m lobster code review mycode.py
+```
+
+**代码解释**
+```bash
+PYTHONPATH=src python -m lobster code explain algorithm.py
+```
+
+**重构建议**
+```bash
+PYTHONPATH=src python -m lobster code refactor legacy.py --focus performance
+```
+
+**生成测试**
+```bash
+PYTHONPATH=src python -m lobster code test mymodule.py
+```
+
+### 文档工具
+
+**文档总结**
+```bash
+PYTHONPATH=src python -m lobster doc-tool summarize report.md --length long
+```
+
+**文档翻译**
+```bash
+PYTHONPATH=src python -m lobster doc-tool translate README.md en
+```
+
+**文档改写**
+```bash
+PYTHONPATH=src python -m lobster doc-tool rewrite draft.md -o polished.md
+```
+
+**生成大纲**
+```bash
+PYTHONPATH=src python -m lobster doc-tool outline report.md
+```
+
 ## 核心功能
 
 ### 1. LLM 功能
