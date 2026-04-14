@@ -1,4 +1,4 @@
-.PHONY: help install test lint clean run
+.PHONY: help install test lint clean
 
 help:
 	@echo "Lobster CLI - Available commands:"
@@ -6,13 +6,13 @@ help:
 	@echo "  make test       - Run tests"
 	@echo "  make lint       - Run code linting"
 	@echo "  make clean      - Clean build artifacts"
-	@echo "  make run        - Run lobster CLI"
 	@echo ""
-	@echo "Lobster commands:"
-	@echo "  lobster version - Show version"
-	@echo "  lobster status  - Check service status"
-	@echo "  lobster chat    - Chat with assistant"
-	@echo "  lobster config  - Show configuration"
+	@echo "Or use lobster commands directly:"
+	@echo "  lobster --help           - Show all commands"
+	@echo "  lobster version         - Show version"
+	@echo "  lobster status         - Check service status"
+	@echo "  lobster config show    - Show configuration"
+	@echo "  lobster chat <message> - Chat with assistant"
 
 install:
 	@echo "Installing dependencies..."
@@ -36,15 +36,3 @@ clean:
 	rm -rf .mypy_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
-
-run:
-	PYTHONPATH=src python -m lobster
-
-version:
-	PYTHONPATH=src python -m lobster version
-
-status:
-	PYTHONPATH=src python -m lobster status
-
-config:
-	PYTHONPATH=src python -m lobster config
