@@ -39,31 +39,27 @@ def chat(message):
     console.print(f"[bold green]Assistant response:[/] Hello! I'm Lobster, your assistant. (mock response)")
 
 
-@cli.command()
-def config():
-    """Show current configuration"""
-    console.print("[bold cyan]Current OpenClaw configuration:[/]")
-    
-    from rich.table import Table
-    table = Table()
-    table.add_column("Setting", style="cyan")
-    table.add_column("Value", style="green")
-    
-    table.add_row("Service URL", "http://localhost:8000")
-    table.add_row("API Key", "********")
-    table.add_row("Timeout", "30s")
-    table.add_row("Default Model", "ollama/gemma3")
-    
-    console.print(table)
-
-
 from lobster.commands.document import doc
 from lobster.commands.llm import llm
 from lobster.commands.rag import rag
+from lobster.commands.config_cmd import config_cmd
+from lobster.commands.batch import batch
+from lobster.commands.plugin_cmd import plugin
+from lobster.commands.util import util
+from lobster.commands.model import model
+from lobster.commands.template import template
+from lobster.commands.doctor import doctor
 
 cli.add_command(doc)
 cli.add_command(llm)
 cli.add_command(rag)
+cli.add_command(config_cmd, name="config")
+cli.add_command(batch)
+cli.add_command(plugin)
+cli.add_command(util)
+cli.add_command(model)
+cli.add_command(template)
+cli.add_command(doctor)
 
 
 def main():

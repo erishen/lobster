@@ -46,50 +46,11 @@ def generate(prompt, model, temperature, timeout):
 @llm.command()
 @click.option('--model', '-m', default='ollama/gemma3', help='Model to use')
 @click.option('--temperature', '-t', default=0.7, help='Temperature parameter')
-def chat(model, temperature):
-    """Start interactive chat session"""
-    try:
-        from langchain_llm_toolkit import ConversationManager
-        
-        console.print(Panel.fit(
-            "[bold cyan]Lobster Chat Session[/]\n"
-            f"Model: {model}\n"
-            "Type 'exit' to quit, 'clear' to clear history",
-            border_style="cyan"
-        ))
-        
-        manager = ConversationManager()
-        manager.set_model(model)
-        manager.set_temperature(temperature)
-        
-        while True:
-            try:
-                user_input = console.input("[bold blue]You:[/] ")
-                
-                if user_input.lower() == 'exit':
-                    console.print("[yellow]Goodbye![/]")
-                    break
-                elif user_input.lower() == 'clear':
-                    manager.clear_history()
-                    console.print("[green]History cleared[/]")
-                    continue
-                elif not user_input.strip():
-                    continue
-                
-                with console.status("[bold green]Thinking..."):
-                    response = manager.converse(user_input)
-                
-                console.print(f"[bold green]Assistant:[/] {response}")
-                
-            except KeyboardInterrupt:
-                console.print("\n[yellow]Goodbye![/]")
-                break
-                
-    except ImportError:
-        console.print("[red]Error:[/] langchain-llm-toolkit not installed")
-        console.print("[yellow]Install with:[/] pip install langchain-llm-toolkit")
-    except Exception as e:
-        console.print(f"[red]Error in chat:[/] {str(e)}")
+@click.option('--system-prompt', help='System prompt for the chat')
+def chat(model, temperature, system_prompt):
+    """Start interactive chat session with enhanced features"""
+    from lobster.core.chat_session import start_interactive_chat
+    start_interactive_chat(model, temperature, system_prompt)
 
 
 @llm.command()
@@ -112,8 +73,8 @@ def models():
         ("gemini-pro", "Cloud", "Google - Gemini Pro (requires API key)"),
     ]
     
-    for model, model_type, description in models_list:
-        table.add_row(model, model_type, description)
+    for model_info, model_type, description in models_list:
+        table.add_row(model_info, model_type, description)
     
     console.print(table)
     
@@ -146,7 +107,7 @@ def stream(prompt, model):
         for chunk in llm.generate_stream(prompt):
             console.print(chunk, end="", style="green")
         
-        console.print()  # New line after streaming
+        console.print()
         
     except ImportError:
         console.print("[red]Error:[/] langchain-llm-toolkit not installed")
