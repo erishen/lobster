@@ -74,6 +74,7 @@ from lobster.commands.util import util  # noqa: E402
 from lobster.commands.model import model  # noqa: E402
 from lobster.commands.template import template  # noqa: E402
 from lobster.commands.doctor import doctor  # noqa: E402
+from lobster.commands.memory import memory  # noqa: E402
 
 cli.add_command(doc)
 cli.add_command(llm)
@@ -85,6 +86,7 @@ cli.add_command(util)
 cli.add_command(model)
 cli.add_command(template)
 cli.add_command(doctor)
+cli.add_command(memory)
 
 
 def main():
