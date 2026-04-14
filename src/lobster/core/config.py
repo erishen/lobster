@@ -3,11 +3,13 @@
 import json
 from pathlib import Path
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class LobsterConfig(BaseModel):
     """Lobster configuration model"""
+
+    model_config = ConfigDict(env_prefix="LOBSTER_")
 
     default_model: str = Field(default="ollama/gemma3", description="Default LLM model")
     default_embedding_model: str = Field(
@@ -20,9 +22,6 @@ class LobsterConfig(BaseModel):
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
     anthropic_api_key: Optional[str] = Field(default=None, description="Anthropic API key")
     google_api_key: Optional[str] = Field(default=None, description="Google API key")
-
-    class Config:
-        env_prefix = "LOBSTER_"
 
 
 class ConfigManager:
