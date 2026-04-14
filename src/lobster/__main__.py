@@ -40,12 +40,11 @@ def status():
 def chat(message, model, interactive, with_memory):
     """Send a message to the OpenClaw assistant"""
     try:
-        from langchain_llm_toolkit import LLMIntegration
-        from langchain_core.messages import HumanMessage, AIMessage
+        from lobster.core.llm_client import get_llm_client
+        from lobster.core.memory_store import MemoryManager
         from rich.prompt import Prompt
 
-        llm = LLMIntegration()
-        llm.set_model(model)
+        llm = get_llm_client(model)
 
         if interactive:
             console.print(
@@ -95,30 +94,18 @@ def chat(message, model, interactive, with_memory):
                     memory_context = ""
                     if with_memory:
                         try:
-                            from lobster.commands.memory import MEMORY_STORE_PATH
-                            from langchain_llm_toolkit import RAGSystem
-                            from pathlib import Path
+                            from lobster.core.memory_store import MemoryManager
 
-                            index_file = MEMORY_STORE_PATH / "index.faiss"
-                            if index_file.exists():
-                                rag_system = RAGSystem(
-                                    vector_store_type="faiss",
-                                    embedding_type="ollama",
-                                    embedding_model="nomic-embed-text",
-                                    llm_model=model,
-                                )
-                                rag_system.load_vector_store(str(MEMORY_STORE_PATH))
-                                memories = rag_system.retrieve_documents(user_input, k=3)
+                            memory = MemoryManager()
+                            memories = memory.search_memory(user_input, k=3)
 
-                                if memories:
-                                    memory_context = "\n\n[Relevant Memories]\n"
-                                    for i, mem in enumerate(memories, 1):
-                                        memory_context += f"{i}. {mem.page_content}\n"
-                                    memory_context += "\n"
+                            if memories:
+                                memory_context = "\n\n[Relevant Memories]\n"
+                                for i, mem in enumerate(memories, 1):
+                                    memory_context += f"{i}. {mem['content']}\n"
+                                memory_context += "\n"
                         except Exception:
                             pass
-
-                    conversation_history.append(HumanMessage(content=user_input))
 
                     enhanced_message = user_input
                     if memory_context:
@@ -127,7 +114,6 @@ def chat(message, model, interactive, with_memory):
                     with console.status("[bold green]Thinking..."):
                         response = llm.generate(enhanced_message)
 
-                    conversation_history.append(AIMessage(content=response))
                     conversation_messages.append({"role": "assistant", "content": response})
 
                     console.print(f"[bold green]Assistant:[/] {response}\n")

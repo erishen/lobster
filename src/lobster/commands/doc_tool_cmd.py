@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.markdown import Markdown
 from pathlib import Path
 
-from langchain_llm_toolkit import LLMIntegration
+from lobster.core.llm_client import get_llm_client
 from lobster.core.config import ConfigManager
 
 console = Console()
@@ -37,7 +37,7 @@ def summarize(file_path, model, length):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     length_prompts = {
@@ -77,7 +77,7 @@ def translate(file_path, target_language, model):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请将以下文档翻译为{target_language}：
@@ -118,7 +118,7 @@ def rewrite(file_path, model, output):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请改写以下文档，使其更加清晰、流畅和专业：
@@ -162,7 +162,7 @@ def outline(file_path, model):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请为以下文档生成大纲：
@@ -201,7 +201,7 @@ def keywords(file_path, model):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请从以下文档中提取关键词：
@@ -238,7 +238,7 @@ def qa(file_path, model):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请根据以下文档生成问答对：
@@ -282,7 +282,7 @@ def slides(file_path, model, format):
     with open(file_path, 'r') as f:
         content = f.read()
     
-    llm = LLMIntegration()
+    llm = get_llm_client(model)
     llm.set_model(model)
     
     prompt = f"""请将以下文档转换为幻灯片内容：
