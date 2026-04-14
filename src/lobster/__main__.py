@@ -3,6 +3,7 @@
 
 import click
 from rich.console import Console
+from rich.panel import Panel
 
 VERSION = "0.1.0"
 console = Console()
@@ -213,6 +214,7 @@ def web(port, host):
         console.print(f"[red]Error starting Web UI:[/] {str(e)}")
 
 
+# 导入所有命令模块
 from lobster.commands.document import doc  # noqa: E402
 from lobster.commands.llm import llm  # noqa: E402
 from lobster.commands.rag import rag  # noqa: E402
@@ -226,6 +228,13 @@ from lobster.commands.doctor import doctor  # noqa: E402
 from lobster.commands.memory import memory  # noqa: E402
 from lobster.commands.history import history  # noqa: E402
 
+# 导入新命令
+from lobster.commands.shortcut import ask, query, remember, recall, status as shortcut_status  # noqa: E402
+from lobster.commands.openclaw_cmd import openclaw  # noqa: E402
+from lobster.commands.code_cmd import code  # noqa: E402
+from lobster.commands.doc_tool_cmd import doc_tool  # noqa: E402
+
+# 注册原有命令
 cli.add_command(doc)
 cli.add_command(llm)
 cli.add_command(rag)
@@ -238,6 +247,16 @@ cli.add_command(template)
 cli.add_command(doctor)
 cli.add_command(memory)
 cli.add_command(history)
+
+# 注册新命令
+cli.add_command(ask)
+cli.add_command(query)
+cli.add_command(remember)
+cli.add_command(recall)
+cli.add_command(shortcut_status, name="shortcut-status")
+cli.add_command(openclaw)
+cli.add_command(code)
+cli.add_command(doc_tool)
 
 
 def main():
