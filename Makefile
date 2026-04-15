@@ -33,7 +33,13 @@ help:
 
 install:
 	@echo "Installing dependencies..."
-	uv pip install -e ".[dev]"
+	@if command -v uv >/dev/null 2>&1; then \
+		UV_HTTP_TIMEOUT=120 uv pip install -e ".[dev]" --user 2>/dev/null || \
+		UV_HTTP_TIMEOUT=120 uv pip install -e ".[dev]"; \
+	else \
+		pip install -e ".[dev]" --user 2>/dev/null || \
+		pip install -e ".[dev]"; \
+	fi
 
 test:
 	@echo "Running tests..."
@@ -41,8 +47,14 @@ test:
 
 lint:
 	@echo "Running code linting..."
-	PYTHONPATH=src flake8 src/lobster --max-line-length=100
-	PYTHONPATH=src black --check src/lobster
+	@if command -v ruff >/dev/null 2>&1; then \
+		ruff check src/lobster; \
+	elif command -v flake8 >/dev/null 2>&1; then \
+		flake8 src/lobster --max-line-length=100; \
+	fi
+	@if command -v black >/dev/null 2>&1; then \
+		black --check src/lobster; \
+	fi
 
 clean:
 	@echo "Cleaning build artifacts..."
@@ -51,5 +63,6 @@ clean:
 	rm -rf *.egg-info
 	rm -rf .pytest_cache
 	rm -rf .mypy_cache
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
+	rm -rf .ruff_cache
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
