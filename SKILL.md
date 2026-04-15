@@ -1,488 +1,284 @@
-# Lobster CLI 工具使用指南
+# Lobster Tools Skill
 
-## 工具简介
+为 OpenClaw 龙虾助理提供工具调用能力。
 
-Lobster CLI 是一个功能强大的命令行工具，集成了 LangChain 和 LiteLLM，提供文档处理、LLM 功能、RAG 系统、模型管理等全面功能。
+## 描述
 
-## 安装位置
+Lobster 是一个工具集服务，为 AI 助理提供文件操作、网络请求、代码执行、系统交互和数据处理等能力。
 
-- 项目路径：`/Users/erishen/Workspace/TraeSolo/lobster`
-- 虚拟环境：`/Users/erishen/Workspace/TraeSolo/lobster/.venv`
+## 能力
 
-## 使用方法
+### 文件操作
+- `file_read` - 读取文件内容
+- `file_write` - 写入文件内容
+- `file_list` - 列出目录内容
+- `file_delete` - 删除文件
 
-### 激活环境
+### 网络请求
+- `http_get` - 发送 HTTP GET 请求
+- `http_post` - 发送 HTTP POST 请求
+- `web_search` - 网络搜索
 
-```bash
-cd /Users/erishen/Workspace/TraeSolo/lobster
-source .venv/bin/activate
-```
-
-### 基本命令格式
-
-```bash
-PYTHONPATH=src python -m lobster <command> [options]
-```
-
-## 🆕 新增功能
-
-### 快捷命令（推荐使用）
-
-**快速提问**
-```bash
-PYTHONPATH=src python -m lobster ask "什么是 AI?"
-PYTHONPATH=src python -m lobster ask "解释下 Python 装饰器" -m ollama/llama3
-```
-
-**快速查询 RAG**
-```bash
-PYTHONPATH=src python -m lobster query "项目的主要功能是什么?"
-```
-
-**快速记忆**
-```bash
-PYTHONPATH=src python -m lobster remember "OpenClaw 是一个 AI 助手项目" -t project
-```
-
-**快速回忆**
-```bash
-PYTHONPATH=src python -m lobster recall "OpenClaw"
-```
-
-### OpenClaw 管理
-
-**检查状态**
-```bash
-PYTHONPATH=src python -m lobster openclaw status
-```
-
-**启动服务**
-```bash
-PYTHONPATH=src python -m lobster openclaw start --port 8000 --model ollama/gemma3
-```
-
-**查看日志**
-```bash
-PYTHONPATH=src python -m lobster openclaw logs --follow
-```
-
-**与 OpenClaw 对话**
-```bash
-PYTHONPATH=src python -m lobster openclaw chat
-```
-
-### 代码工具
-
-**代码审查**
-```bash
-PYTHONPATH=src python -m lobster code review mycode.py
-```
-
-**代码解释**
-```bash
-PYTHONPATH=src python -m lobster code explain algorithm.py
-```
-
-**重构建议**
-```bash
-PYTHONPATH=src python -m lobster code refactor legacy.py --focus performance
-```
-
-**生成测试**
-```bash
-PYTHONPATH=src python -m lobster code test mymodule.py
-```
-
-### 文档工具
-
-**文档总结**
-```bash
-PYTHONPATH=src python -m lobster doc-tool summarize report.md --length long
-```
-
-**文档翻译**
-```bash
-PYTHONPATH=src python -m lobster doc-tool translate README.md en
-```
-
-**文档改写**
-```bash
-PYTHONPATH=src python -m lobster doc-tool rewrite draft.md -o polished.md
-```
-
-**生成大纲**
-```bash
-PYTHONPATH=src python -m lobster doc-tool outline report.md
-```
-
-## 核心功能
-
-### 1. LLM 功能
-
-**生成文本**
-```bash
-PYTHONPATH=src python -m lobster llm generate "你的问题" --model ollama/gemma3
-```
-
-**交互式聊天**
-```bash
-PYTHONPATH=src python -m lobster llm chat --model ollama/gemma3
-```
-
-**查看可用模型**
-```bash
-PYTHONPATH=src python -m lobster llm models
-```
-
-**流式生成**
-```bash
-PYTHONPATH=src python -m lobster llm stream "讲个故事" --model ollama/gemma3
-```
-
-### 1.5. 交互式对话（新增）
-
-**启动交互式聊天**
-```bash
-PYTHONPATH=src python -m lobster chat -i
-```
-
-**记忆增强对话**
-```bash
-PYTHONPATH=src python -m lobster chat -i --with-memory
-```
-
-**指定模型**
-```bash
-PYTHONPATH=src python -m lobster chat -i -m ollama/llama3.1:8b
-```
-
-**交互命令**
-- `quit` 或 `exit` - 退出对话
-- `clear` - 清空对话历史
-
-### 1.6. 对话历史管理（新增）
-
-**列出所有对话**
-```bash
-PYTHONPATH=src python -m lobster history list
-```
-
-**查看特定对话**
-```bash
-PYTHONPATH=src python -m lobster history show 1
-```
-
-**导出对话为 Markdown**
-```bash
-PYTHONPATH=src python -m lobster history export 1 conversation.md
-```
+### 代码执行
+- `run_python` - 执行 Python 代码
+- `run_shell` - 执行 Shell 命令
 
-**删除对话**
-```bash
-PYTHONPATH=src python -m lobster history delete 1
-```
-
-**清空所有历史**
-```bash
-PYTHONPATH=src python -m lobster history clear
-```
-
-### 1.7. Web UI 界面（新增）
-
-**启动 Web UI**
-```bash
-PYTHONPATH=src python -m lobster web
-```
-
-**指定端口和主机**
-```bash
-PYTHONPATH=src python -m lobster web --port 8502 --host 0.0.0.0
-```
-
-**功能说明**
-- 💬 **聊天界面** - 与 OpenClaw 助手对话
-- 🧠 **记忆管理** - 添加、查看、搜索记忆
-- 📜 **历史记录** - 查看对话历史
-- ⚙️ **设置** - 选择模型、启用记忆
-
-**安装依赖**
-```bash
-pip install lobster[web]
-```
+### 系统交互
+- `notify` - 发送系统通知
+- `clipboard` - 操作剪贴板
 
-### 2. 文档处理
+### 数据处理
+- `json_parse` - 解析 JSON 数据
+- `text_process` - 文本处理
+- `calculate` - 数学计算
 
-**加载文档**
-```bash
-PYTHONPATH=src python -m lobster doc load /path/to/document.pdf
-```
+## 使用方式
 
-**分割文档**
-```bash
-PYTHONPATH=src python -m lobster doc split /path/to/document.txt --chunk-size 1000
-```
+### 启动服务
 
-**列出目录文档**
 ```bash
-PYTHONPATH=src python -m lobster doc list /path/to/directory
+lobster api serve
 ```
 
-### 3. RAG 系统
+服务默认运行在 `http://localhost:8000`
 
-**上传文档到向量存储**
-```bash
-PYTHONPATH=src python -m lobster rag upload /path/to/document.txt --vector-store faiss --embedding-type ollama
-```
+### API 端点
 
-**查询 RAG 系统**
-```bash
-PYTHONPATH=src python -m lobster rag query "你的问题" --model ollama/gemma3
-```
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/tools` | GET | 列出所有可用工具 |
+| `/tools/openai` | GET | 获取 OpenAI Function Calling 格式 |
+| `/tools/{name}` | GET | 获取工具详情 |
+| `/tools/{name}/execute` | POST | 执行工具 |
 
-**搜索相似文档**
-```bash
-PYTHONPATH=src python -m lobster rag search "搜索内容"
-```
+### 调用示例
 
-### 4. 模型管理
+```python
+import requests
 
-**列出已安装的 Ollama 模型**
-```bash
-PYTHONPATH=src python -m lobster model list
-```
+# 获取工具列表
+response = requests.get("http://localhost:8000/tools")
+tools = response.json()["tools"]
 
-**拉取新模型**
-```bash
-PYTHONPATH=src python -m lobster model pull llama3.1:8b
+# 执行工具
+result = requests.post(
+    "http://localhost:8000/tools/file_read/execute",
+    json={"path": "/path/to/file.txt"}
+)
+print(result.json())
 ```
 
-**查看模型信息**
-```bash
-PYTHONPATH=src python -m lobster model info gemma3:latest
-```
+### OpenAI Function Calling 集成
 
-**查看流行模型**
-```bash
-PYTHONPATH=src python -m lobster model popular
-```
+```python
+# 获取工具定义
+tools = requests.get("http://localhost:8000/tools/openai").json()["tools"]
 
-### 5. 配置管理
+# 在 OpenAI API 中使用
+response = openai.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "读取 /tmp/test.txt 文件"}],
+    tools=tools
+)
 
-**查看当前配置**
-```bash
-PYTHONPATH=src python -m lobster config show
+# 执行工具调用
+if response.choices[0].message.tool_calls:
+    tool_call = response.choices[0].message.tool_calls[0]
+    result = requests.post(
+        f"http://localhost:8000/tools/{tool_call.function.name}/execute",
+        json=json.loads(tool_call.function.arguments)
+    )
 ```
 
-**设置配置**
-```bash
-PYTHONPATH=src python -m lobster config set default_model ollama/gemma3
-```
+## 工具详情
 
-**获取配置值**
-```bash
-PYTHONPATH=src python -m lobster config get default_model
-```
+### file_read
+读取文件内容。
 
-### 6. 记忆管理 (OpenClaw Memory)
+参数:
+- `path` (string, required): 文件路径
+- `encoding` (string, default: "utf-8"): 文件编码
 
-**添加记忆**
-```bash
-PYTHONPATH=src python -m lobster memory add "OpenClaw 是一个 AI 助手项目" -t project -t openclaw
+返回:
+```json
+{
+  "content": "文件内容",
+  "size": 100,
+  "lines": 10
+}
 ```
+
+### file_write
+写入文件内容。
 
-**列出所有记忆**
-```bash
-PYTHONPATH=src python -m lobster memory list
+参数:
+- `path` (string, required): 文件路径
+- `content` (string, required): 文件内容
+- `mode` (string, default: "write"): 写入模式 (write/append)
+
+返回:
+```json
+{
+  "path": "/absolute/path/to/file",
+  "size": 100
+}
 ```
 
-**搜索记忆**
-```bash
-PYTHONPATH=src python -m lobster memory search "OpenClaw"
-```
+### file_list
+列出目录内容。
 
-**查看记忆统计**
-```bash
-PYTHONPATH=src python -m lobster memory stats
-```
+参数:
+- `path` (string, default: "."): 目录路径
+- `pattern` (string, default: "*"): 文件匹配模式
 
-**删除记忆**
-```bash
-PYTHONPATH=src python -m lobster memory delete <memory_id>
+返回:
+```json
+{
+  "files": [
+    {"name": "file.txt", "path": "./file.txt", "type": "file", "size": 100}
+  ],
+  "count": 1
+}
 ```
 
-**清空所有记忆**
-```bash
-PYTHONPATH=src python -m lobster memory clear
-```
+### http_get
+发送 HTTP GET 请求。
 
-### 7. 批量处理
+参数:
+- `url` (string, required): 请求 URL
+- `headers` (object, optional): 请求头
+- `timeout` (integer, default: 30): 超时时间
 
-**批量分割文档**
-```bash
-PYTHONPATH=src python -m lobster batch split /path/to/directory --pattern "*.txt"
+返回:
+```json
+{
+  "status_code": 200,
+  "content": "响应内容",
+  "headers": {}
+}
 ```
 
-**批量索引文档**
-```bash
-PYTHONPATH=src python -m lobster batch index /path/to/directory --vector-store faiss
-```
+### run_python
+执行 Python 代码。
 
-### 7. 工具命令
+参数:
+- `code` (string, required): Python 代码
+- `timeout` (integer, default: 30): 超时时间
 
-**文本统计**
-```bash
-PYTHONPATH=src python -m lobster util textstat /path/to/file.txt
+返回:
+```json
+{
+  "stdout": "标准输出",
+  "stderr": "标准错误",
+  "returncode": 0
+}
 ```
 
-**代码分析**
-```bash
-PYTHONPATH=src python -m lobster util codeinfo /path/to/code.py
-```
+### run_shell
+执行 Shell 命令。
 
-**JSON 格式化**
-```bash
-PYTHONPATH=src python -m lobster util jsonfmt /path/to/file.json
-```
+参数:
+- `command` (string, required): Shell 命令
+- `timeout` (integer, default: 30): 超时时间
 
-**环境检查**
-```bash
-PYTHONPATH=src python -m lobster util envcheck
+返回:
+```json
+{
+  "stdout": "标准输出",
+  "stderr": "标准错误",
+  "returncode": 0
+}
 ```
 
-### 8. 系统诊断
-
-**系统检查**
-```bash
-PYTHONPATH=src python -m lobster doctor check
-```
+### notify
+发送系统通知。
 
-**系统信息**
-```bash
-PYTHONPATH=src python -m lobster doctor info
-```
+参数:
+- `message` (string, required): 通知内容
+- `title` (string, default: "OpenClaw"): 通知标题
 
-**修复常见问题**
-```bash
-PYTHONPATH=src python -m lobster doctor fix
+返回:
+```json
+{
+  "sent": true,
+  "message": "通知内容"
+}
 ```
 
-### 9. 模板管理
-
-**查看内置模板**
-```bash
-PYTHONPATH=src python -m lobster template builtin
-```
+### json_parse
+解析 JSON 数据。
 
-**创建模板**
-```bash
-PYTHONPATH=src python -m lobster template create my_template
-```
+参数:
+- `data` (string, required): JSON 字符串
+- `path` (string, optional): 提取路径 (如: data.items.0.name)
 
-**应用模板**
-```bash
-PYTHONPATH=src python -m lobster template apply my_template --model ollama/gemma3
+返回:
+```json
+{
+  "data": "解析后的数据"
+}
 ```
 
-### 10. 插件系统
+### text_process
+文本处理。
 
-**列出插件**
-```bash
-PYTHONPATH=src python -m lobster plugin list
-```
+参数:
+- `text` (string, required): 输入文本
+- `operation` (string, required): 操作类型 (uppercase/lowercase/trim/lines/words/count)
 
-**创建插件**
-```bash
-PYTHONPATH=src python -m lobster plugin create my_plugin
+返回:
+```json
+{
+  "result": "处理结果"
+}
 ```
-
-## 常用场景
-
-### 场景 1：快速问答
 
-```bash
-cd /Users/erishen/Workspace/TraeSolo/lobster
-source .venv/bin/activate
-PYTHONPATH=src python -m lobster llm generate "什么是 LangChain?"
-```
+### calculate
+数学计算。
 
-### 场景 2：文档问答
+参数:
+- `expression` (string, required): 数学表达式
 
-```bash
-# 1. 上传文档
-PYTHONPATH=src python -m lobster rag upload /path/to/document.pdf
-
-# 2. 查询文档
-PYTHONPATH=src python -m lobster rag query "文档的主要内容是什么?"
+返回:
+```json
+{
+  "expression": "2 + 2",
+  "result": 4
+}
 ```
 
-### 场景 3：批量处理文档
+## 安装
 
 ```bash
-# 批量索引目录中的所有文档
-PYTHONPATH=src python -m lobster batch index /path/to/documents --vector-store faiss
-```
+pip install lobster
 
-### 场景 4：代码分析
-
-```bash
-# 分析代码文件
-PYTHONPATH=src python -m lobster util codeinfo /path/to/code.py
+# 或安装所有功能
+pip install "lobster[all]"
 ```
-
-## 注意事项
-
-1. **环境激活**：使用前必须激活虚拟环境
-   ```bash
-   cd /Users/erishen/Workspace/TraeSolo/lobster
-   source .venv/bin/activate
-   ```
-
-2. **PYTHONPATH 设置**：所有命令都需要设置 PYTHONPATH=src
 
-3. **Ollama 运行**：使用本地模型前，确保 Ollama 服务正在运行
-   ```bash
-   ollama serve
-   ```
+## 依赖
 
-4. **模型选择**：
-   - 本地模型：`ollama/gemma3`, `ollama/llama3.1:8b`, `ollama/deepseek-r1:7b`
-   - 云端模型：`gpt-4o`, `claude-3-opus` (需要 API key)
+核心依赖:
+- click >= 8.1.0
+- pydantic >= 2.0.0
+- rich >= 13.0.0
+- litellm >= 1.0.0
 
-5. **配置文件**：配置保存在 `~/.lobster/config.json`
+可选依赖:
+- fastapi, uvicorn (API 服务)
+- requests (HTTP 请求)
+- streamlit (Web UI)
 
-6. **向量存储**：默认使用 FAISS，支持 Qdrant
+## 安全注意事项
 
-## 依赖项目
+- `run_shell` 和 `run_python` 具有较高权限，请谨慎使用
+- 建议在生产环境中添加认证和授权机制
+- 文件操作受系统权限限制
 
-- langchain-llm-toolkit：`/Users/erishen/Workspace/TraeSolo/langchain-llm-toolkit`
-- Ollama：本地 LLM 服务
+## 版本
 
-## 快速帮助
+当前版本: 0.1.0
 
-查看任何命令的帮助：
-```bash
-PYTHONPATH=src python -m lobster <command> --help
-```
-
-示例：
-```bash
-PYTHONPATH=src python -m lobster llm --help
-PYTHONPATH=src python -m lobster rag --help
-PYTHONPATH=src python -m lobster doc --help
-```
-
-## 完整命令列表
+## 许可证
 
-运行以下命令查看所有可用命令：
-```bash
-PYTHONPATH=src python -m lobster --help
-```
-
-## 测试
-
-运行测试套件：
-```bash
-cd /Users/erishen/Workspace/TraeSolo/lobster
-source .venv/bin/activate
-python -m pytest tests/ -v
-```
+MIT License

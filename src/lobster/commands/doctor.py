@@ -75,7 +75,7 @@ def check_dependencies():
         ("rich", "Rich", "Terminal output"),
         ("pydantic", "Pydantic", "Data validation"),
         ("requests", "Requests", "HTTP client"),
-        ("langchain_llm_toolkit", "LangChain LLM Toolkit", "LLM integration"),
+        ("litellm", "LiteLLM", "LLM integration"),
     ]
 
     for module, name, desc in dependencies:

@@ -101,9 +101,7 @@ def list():
 
         for i, conv in enumerate(conversations, 1):
             timestamp = conv["timestamp"][:19] if len(conv["timestamp"]) > 19 else conv["timestamp"]
-            table.add_row(
-                str(i), timestamp, str(conv["message_count"]), conv["preview"] + "..."
-            )
+            table.add_row(str(i), timestamp, str(conv["message_count"]), conv["preview"] + "...")
 
         console.print(table)
 
@@ -123,7 +121,10 @@ def show(index):
             return
 
         if index < 1 or index > len(conversations):
-            console.print(f"[red]Error:[/] Invalid index. Use 'lobster history list' to see available conversations")
+            console.print(
+                "[red]Error:[/] Invalid index. "
+                "Use 'lobster history list' to see available conversations"
+            )
             return
 
         conv = conversations[index - 1]
@@ -169,7 +170,7 @@ def delete(index):
             return
 
         if index < 1 or index > len(conversations):
-            console.print(f"[red]Error:[/] Invalid index")
+            console.print("[red]Error:[/] Invalid index")
             return
 
         conv = conversations[index - 1]
@@ -177,7 +178,7 @@ def delete(index):
 
         if filepath.exists():
             filepath.unlink()
-            console.print(f"[green]✓[/] Conversation deleted successfully")
+            console.print("[green]✓[/] Conversation deleted successfully")
             console.print(f"[dim]File: {conv['filename']}[/]")
         else:
             console.print("[red]Error:[/] Conversation file not found")
@@ -199,7 +200,7 @@ def export(index, output):
             return
 
         if index < 1 or index > len(conversations):
-            console.print(f"[red]Error:[/] Invalid index")
+            console.print("[red]Error:[/] Invalid index")
             return
 
         conv = conversations[index - 1]
@@ -210,13 +211,13 @@ def export(index, output):
             return
 
         markdown_lines = [
-            f"# Conversation Export",
-            f"",
+            "# Conversation Export",
+            "",
             f"**Timestamp:** {data.get('timestamp', 'Unknown')}",
             f"**Messages:** {len(data.get('messages', []))}",
-            f"",
-            f"---",
-            f"",
+            "",
+            "---",
+            "",
         ]
 
         for msg in data.get("messages", []):
@@ -224,21 +225,21 @@ def export(index, output):
             content = msg.get("content", "")
 
             if role == "user":
-                markdown_lines.append(f"## 👤 User")
+                markdown_lines.append("## 👤 User")
             else:
-                markdown_lines.append(f"## 🤖 Assistant")
+                markdown_lines.append("## 🤖 Assistant")
 
-            markdown_lines.append(f"")
+            markdown_lines.append("")
             markdown_lines.append(content)
-            markdown_lines.append(f"")
-            markdown_lines.append(f"---")
-            markdown_lines.append(f"")
+            markdown_lines.append("")
+            markdown_lines.append("---")
+            markdown_lines.append("")
 
         output_path = Path(output)
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(markdown_lines))
 
-        console.print(f"[green]✓[/] Conversation exported successfully")
+        console.print("[green]✓[/] Conversation exported successfully")
         console.print(f"[dim]File: {output_path}[/]")
 
     except Exception as e:

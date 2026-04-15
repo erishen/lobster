@@ -33,9 +33,23 @@ dev = [
     "black>=23.0.0",
     "flake8>=6.0.0",
     "mypy>=1.0.0",
+    "ruff>=0.1.0",
 ]
 web = [
     "streamlit>=1.30.0",
+]
+api = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+]
+watch = [
+    "watchdog>=3.0.0",
+]
+http = [
+    "requests>=2.31.0",
+]
+all = [
+    "lobster[dev,web,api,watch,http]",
 ]
 
 [project.scripts]
@@ -57,3 +71,7 @@ python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

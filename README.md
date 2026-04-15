@@ -1,237 +1,250 @@
-# 🦞 Lobster - OpenClaw Assistant CLI Tool
+# 🦞 Lobster - OpenClaw 龙虾助理工具集
 
-A modern, extensible command-line interface for the OpenClaw Lobster Assistant service.
+为 OpenClaw 龙虾助理提供可调用的工具集 CLI。
 
-## ✨ Features
+## ✨ 特性
 
-- 🎯 **Simple Commands** - Easy-to-use command structure
-- 🔌 **Plugin System** - Extensible architecture for custom functionality
-- ⚙️ **Configuration Management** - Flexible configuration options
-- 🎨 **Beautiful Output** - Rich terminal output with colors and formatting
-- 📦 **Modern Stack** - Built with Click, Pydantic, and Rich
+- 🔧 **工具注册表** - 提供标准化工具接口
+- 🚀 **API 服务器** - REST API 供 OpenClaw 调用
+- 📋 **OpenAI Function Calling** - 兼容 OpenAI 函数调用格式
+- 🎯 **简单命令** - 易用的命令行结构
+- 📦 **现代技术栈** - 基于 Click, Pydantic, Rich, LiteLLM
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Installation
+### 安装
 
 ```bash
-# Clone the repository
-cd /Users/erishen/Workspace/TraeSolo/lobster
+# 克隆仓库
+git clone <repository-url>
+cd lobster
 
-# Install dependencies
+# 安装依赖
 make install
-# or
+# 或
 uv pip install -e ".[dev]"
 ```
 
-### Basic Usage
+### 基本使用
 
 ```bash
-# Show help
-make run
-# or
-PYTHONPATH=src python -m lobster --help
+# 显示帮助
+lobster --help
 
-# Show version
-make version
-# or
-PYTHONPATH=src python -m lobster version
+# 快捷命令
+lobster ask "你的问题"
+lobster remember "要记住的内容"
+lobster recall "关键词"
 
-# Check service status
-make status
-# or
-PYTHONPATH=src python -m lobster status
+# 交互式对话
+lobster chat -i
 
-# Chat with assistant
-PYTHONPATH=src python -m lobster chat "你好"
-
-# Show configuration
-make config
-# or
-PYTHONPATH=src python -m lobster config
+# 启动 Web UI
+lobster web
 ```
 
-## 📖 Available Commands
+## 🔗 OpenClaw 集成
 
-### `lobster version`
-Show the current version of Lobster CLI.
+### 启动 API 服务器
 
 ```bash
-$ lobster version
-Lobster CLI version 0.1.0
+# 启动 API 服务器
+lobster api serve
+
+# 指定端口
+lobster api serve -p 8080
 ```
 
-### `lobster status`
-Check the status of the OpenClaw service.
+### API 端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/tools` | GET | 列出所有可用工具 |
+| `/tools/openai` | GET | OpenAI Function Calling 格式 |
+| `/tools/{name}` | GET | 获取工具详情 |
+| `/tools/{name}/execute` | POST | 执行工具 |
+
+### OpenClaw 调用示例
+
+```python
+import requests
+
+# 获取工具列表
+response = requests.get("http://localhost:8000/tools")
+tools = response.json()["tools"]
+
+# 执行工具
+result = requests.post(
+    "http://localhost:8000/tools/ask/execute",
+    json={"question": "什么是 Python?"}
+)
+print(result.json())
+```
+
+### 可用工具
+
+| 工具 | 分类 | 说明 |
+|------|------|------|
+| `ask` | ai | 向 AI 提问并获取回答 |
+| `remember` | memory | 记住信息，存储到记忆库 |
+| `recall` | memory | 从记忆库中搜索回忆 |
+| `search` | search | 全局搜索（记忆、历史、项目） |
+| `code_analyze` | code | 分析代码文件 |
+| `data_analyze` | data | 分析数据文件 |
+| `notify` | system | 发送系统通知 |
+| `execute_command` | system | 执行系统命令 |
+
+### OpenAI Function Calling 格式
 
 ```bash
-$ lobster status
-Checking OpenClaw service status...
-✓ Service is running (mock status)
+# 获取 OpenAI 格式的工具定义
+curl http://localhost:8000/tools/openai
 ```
 
-### `lobster chat <message>`
-Send a message to the OpenClaw assistant.
-
-```bash
-$ lobster chat "你好"
-Sending message to OpenClaw: 你好
-Assistant response: Hello! I'm Lobster, your assistant. (mock response)
+返回格式：
+```json
+{
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "ask",
+        "description": "向 AI 提问并获取回答",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "question": {"type": "string", "description": "要提问的问题"},
+            "model": {"type": "string", "default": "ollama/gemma3"}
+          },
+          "required": ["question"]
+        }
+      }
+    }
+  ]
+}
 ```
 
-### `lobster config`
-Show current configuration settings.
+## 📖 命令列表
 
-```bash
-$ lobster config
-Current OpenClaw configuration:
-  Service URL: http://localhost:8000
-  API Key: ********
-  Timeout: 30s
-```
+### 快捷命令
 
-## 🛠️ Development
+| 命令 | 说明 |
+|------|------|
+| `lobster ask "问题"` | 快速提问 |
+| `lobster remember "内容"` | 快速记忆 |
+| `lobster recall "关键词"` | 快速回忆 |
+| `lobster status` | 快速状态检查 |
 
-### Project Structure
+### 核心命令
+
+| 命令 | 说明 |
+|------|------|
+| `lobster chat` | 对话模式 |
+| `lobster api` | API 服务器 |
+| `lobster config` | 配置管理 |
+| `lobster memory` | 记忆管理 |
+| `lobster search` | 全局搜索 |
+
+### 工具命令
+
+| 命令 | 说明 |
+|------|------|
+| `lobster code` | 代码分析工具 |
+| `lobster data` | 数据分析工具 |
+| `lobster project` | 项目管理工具 |
+| `lobster notify` | 系统通知 |
+
+### 高级命令
+
+| 命令 | 说明 |
+|------|------|
+| `lobster datax` | 数据导出/导入 |
+| `lobster scheduler` | 定时任务 |
+| `lobster webhook` | Webhook 管理 |
+| `lobster watch` | 文件监控 |
+| `lobster client` | API 客户端 |
+
+## 🛠️ 开发
+
+### 项目结构
 
 ```
 lobster/
-├── src/
-│   └── lobster/          # Main package
-│       ├── __init__.py
-│       ├── __main__.py   # CLI entry point
-│       ├── commands/     # Command modules
-│       ├── core/         # Core functionality
-│       └── plugins/      # Plugin directory
-├── tests/                # Test files
-├── pyproject.toml        # Project configuration
-├── Makefile             # Build commands
-└── README.md            # This file
+├── src/lobster/
+│   ├── commands/     # 命令模块
+│   ├── core/         # 核心功能
+│   │   ├── tools.py  # 工具注册表
+│   │   ├── llm_client.py
+│   │   └── memory_store.py
+│   └── web/          # Web UI
+├── tests/            # 测试文件
+└── pyproject.toml    # 项目配置
 ```
 
-### Development Commands
+### 开发命令
 
 ```bash
-# Install development dependencies
-make install
-
-# Run tests
-make test
-
-# Run linting
-make lint
-
-# Clean build artifacts
-make clean
+make install    # 安装依赖
+make test       # 运行测试
+make lint       # 代码检查
 ```
 
-### Adding New Commands
+### 添加新工具
 
-1. Create a new command module in `src/lobster/commands/`
-2. Import and register the command in `__main__.py`
-3. Add tests in `tests/`
-
-Example:
+在 `src/lobster/core/tools.py` 中注册新工具：
 
 ```python
-# src/lobster/commands/custom.py
-import click
-
-@click.command()
-def custom():
-    """Custom command description"""
-    click.echo("Custom command executed!")
+self.register(Tool(
+    name="my_tool",
+    description="工具描述",
+    parameters={
+        "type": "object",
+        "properties": {
+            "input": {"type": "string", "description": "输入参数"}
+        },
+        "required": ["input"]
+    },
+    handler=self._handle_my_tool,
+    category="custom"
+))
 ```
 
-```python
-# src/lobster/__main__.py
-from lobster.commands.custom import custom
+## 🔧 配置
 
-cli.add_command(custom)
+### 环境变量
+
+```bash
+export OPENCLAW_URL="http://localhost:8000"
+export OPENCLAW_API_KEY="your-api-key"
 ```
 
-## 🔧 Configuration
+### 配置文件 (`~/.lobster/config.json`)
 
-Configuration can be set via:
-
-1. **Environment Variables**
-   ```bash
-   export OPENCLAW_URL="http://localhost:8000"
-   export OPENCLAW_API_KEY="your-api-key"
-   export OPENCLAW_TIMEOUT="30"
-   ```
-
-2. **Configuration File** (`~/.lobster/config.json`)
-   ```json
-   {
-     "service_url": "http://localhost:8000",
-     "api_key": "your-api-key",
-     "timeout": 30
-   }
-   ```
-
-3. **.env File**
-   ```bash
-   OPENCLAW_URL=http://localhost:8000
-   OPENCLAW_API_KEY=your-api-key
-   OPENCLAW_TIMEOUT=30
-   ```
-
-## 🔌 Plugin Development
-
-Lobster supports a plugin system for extending functionality.
-
-### Creating a Plugin
-
-1. Create a plugin directory in `~/.lobster/plugins/`
-2. Add a `plugin.py` file with your commands
-3. Lobster will automatically discover and load the plugin
-
-Example plugin:
-
-```python
-# ~/.lobster/plugins/my_plugin/plugin.py
-import click
-
-@click.command()
-def my_command():
-    """My custom command"""
-    click.echo("My plugin command!")
+```json
+{
+  "service_url": "http://localhost:8000",
+  "api_key": "your-api-key"
+}
 ```
 
-## 📦 Dependencies
+## 📦 依赖
 
-### Core Dependencies
-- `click` - CLI framework
-- `pydantic` - Data validation
-- `pydantic-settings` - Settings management
-- `rich` - Terminal formatting
-- `python-dotenv` - Environment variable loading
+### 核心依赖
+- `click` - CLI 框架
+- `pydantic` - 数据验证
+- `rich` - 终端格式化
+- `litellm` - LLM 集成
 
-### Development Dependencies
-- `pytest` - Testing framework
-- `black` - Code formatting
-- `flake8` - Code linting
-- `mypy` - Type checking
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### 可选依赖
+- `fastapi`, `uvicorn` - API 服务器
+- `streamlit` - Web UI
+- `watchdog` - 文件监控
+- `requests` - HTTP 客户端
 
 ## 📝 License
 
-MIT License - see LICENSE file for details
-
-## 🙏 Acknowledgments
-
-- Built with [Click](https://click.palletsprojects.com/)
-- Inspired by modern CLI tools
-- Part of the OpenClaw ecosystem
+MIT License
 
 ---
 
-**Lobster** - Making OpenClaw interactions simple and powerful! 🦞
+**Lobster** - 为 OpenClaw 龙虾助理提供强大工具支持！🦞

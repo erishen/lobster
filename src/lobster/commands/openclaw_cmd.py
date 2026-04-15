@@ -20,16 +20,16 @@ def openclaw():
 def status():
     """检查 OpenClaw 服务状态"""
     console.print(Panel("🔍 [bold cyan]OpenClaw 服务状态[/bold cyan]", border_style="blue"))
-    
+
     try:
         response = requests.get("http://localhost:8000/health", timeout=2)
         if response.status_code == 200:
             data = response.json()
             console.print("\n✅ [bold green]OpenClaw 正在运行[/bold green]")
-            console.print(f"  服务地址: http://localhost:8000")
-            if 'version' in data:
+            console.print("  服务地址: http://localhost:8000")
+            if "version" in data:
                 console.print(f"  版本: {data['version']}")
-            if 'model' in data:
+            if "model" in data:
                 console.print(f"  当前模型: {data['model']}")
         else:
             console.print("\n⚠️  [bold yellow]OpenClaw 服务异常[/bold yellow]")
@@ -42,25 +42,25 @@ def status():
 
 
 @openclaw.command()
-@click.option('--port', '-p', default=8000, help='服务端口')
-@click.option('--host', '-h', default='localhost', help='服务主机')
-@click.option('--model', '-m', default='ollama/gemma3', help='默认模型')
-@click.option('--daemon', '-d', is_flag=True, help='后台运行')
+@click.option("--port", "-p", default=8000, help="服务端口")
+@click.option("--host", "-h", default="localhost", help="服务主机")
+@click.option("--model", "-m", default="ollama/gemma3", help="默认模型")
+@click.option("--daemon", "-d", is_flag=True, help="后台运行")
 def start(port, host, model, daemon):
     """启动 OpenClaw 服务"""
     console.print(Panel("🚀 [bold cyan]启动 OpenClaw[/bold cyan]", border_style="blue"))
-    
+
     try:
         cmd = ["openclaw", "start", "--port", str(port), "--host", host, "--model", model]
-        
+
         if daemon:
             cmd.append("--daemon")
             subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            console.print(f"\n✅ [bold green]OpenClaw 已在后台启动[/bold green]")
+            console.print("\n✅ [bold green]OpenClaw 已在后台启动[/bold green]")
             console.print(f"  服务地址: http://{host}:{port}")
             console.print(f"  默认模型: {model}")
         else:
-            console.print(f"\n🚀 [bold green]启动中...[/bold green]")
+            console.print("\n🚀 [bold green]启动中...[/bold green]")
             console.print(f"  服务地址: http://{host}:{port}")
             console.print(f"  默认模型: {model}")
             console.print("\n💡 按 Ctrl+C 停止服务\n")
@@ -79,7 +79,7 @@ def start(port, host, model, daemon):
 def stop():
     """停止 OpenClaw 服务"""
     console.print(Panel("🛑 [bold cyan]停止 OpenClaw[/bold cyan]", border_style="blue"))
-    
+
     try:
         result = subprocess.run(["openclaw", "stop"], capture_output=True, text=True)
         if result.returncode == 0:
@@ -93,11 +93,11 @@ def stop():
 
 
 @openclaw.command()
-@click.option('--follow', '-f', is_flag=True, help='实时查看日志')
+@click.option("--follow", "-f", is_flag=True, help="实时查看日志")
 def logs(follow):
     """查看 OpenClaw 日志"""
     console.print(Panel("📋 [bold cyan]OpenClaw 日志[/bold cyan]", border_style="blue"))
-    
+
     try:
         cmd = ["openclaw", "logs"]
         if follow:
@@ -115,7 +115,7 @@ def logs(follow):
 def config():
     """查看 OpenClaw 配置"""
     console.print(Panel("⚙️  [bold cyan]OpenClaw 配置[/bold cyan]", border_style="blue"))
-    
+
     try:
         result = subprocess.run(["openclaw", "config", "show"], capture_output=True, text=True)
         if result.returncode == 0:
@@ -129,11 +129,11 @@ def config():
 
 
 @openclaw.command()
-@click.option('--model', '-m', default=None, help='指定模型')
+@click.option("--model", "-m", default=None, help="指定模型")
 def chat(model):
     """与 OpenClaw 对话"""
     console.print(Panel("💬 [bold cyan]OpenClaw 对话[/bold cyan]", border_style="blue"))
-    
+
     try:
         cmd = ["openclaw", "chat"]
         if model:
@@ -151,7 +151,7 @@ def chat(model):
 def models():
     """列出 OpenClaw 可用模型"""
     console.print(Panel("🤖 [bold cyan]OpenClaw 可用模型[/bold cyan]", border_style="blue"))
-    
+
     try:
         result = subprocess.run(["openclaw", "models", "list"], capture_output=True, text=True)
         if result.returncode == 0:
@@ -165,11 +165,11 @@ def models():
 
 
 @openclaw.command()
-@click.argument('model_name')
+@click.argument("model_name")
 def pull(model_name):
     """拉取 OpenClaw 模型"""
     console.print(Panel(f"📥 [bold cyan]拉取模型: {model_name}[/bold cyan]", border_style="blue"))
-    
+
     try:
         subprocess.run(["openclaw", "models", "pull", model_name])
     except FileNotFoundError:
@@ -182,25 +182,25 @@ def pull(model_name):
 def info():
     """显示 OpenClaw 详细信息"""
     console.print(Panel("ℹ️  [bold cyan]OpenClaw 信息[/bold cyan]", border_style="blue"))
-    
+
     table = Table(show_header=True, header_style="bold cyan")
     table.add_column("项目", style="cyan")
     table.add_column("值", style="green")
-    
+
     try:
         result = subprocess.run(["openclaw", "--version"], capture_output=True, text=True)
         version = result.stdout.strip() if result.returncode == 0 else "未知"
         table.add_row("版本", version)
-    except:
+    except (subprocess.SubprocessError, FileNotFoundError):
         table.add_row("版本", "未安装")
-    
+
     table.add_row("服务地址", "http://localhost:8000")
     table.add_row("配置文件", "~/.openclaw/config.yaml")
     table.add_row("数据目录", "~/.openclaw/data")
     table.add_row("日志目录", "~/.openclaw/logs")
-    
+
     console.print(f"\n{table}\n")
-    
+
     console.print("📚 [bold]常用命令:[/bold]")
     console.print("  lobster openclaw status   - 查看状态")
     console.print("  lobster openclaw start     - 启动服务")
