@@ -42,6 +42,9 @@ htmlcov/
 # MyPy
 .mypy_cache/
 
+# Ruff
+.ruff_cache/
+
 # Environment variables
 .env
 .env.local
@@ -55,6 +58,17 @@ Thumbs.db
 test_document.txt
 vector_store/
 qdrant_storage/
+
+# Lobster data files
 .lobster_memory/
 .lobster_memory_index.json
 .lobster_history/
+.lobster_vector_store/
+.lobster_scheduler.json
+.lobster_webhooks.json
+.lobster_watchers.json
+lobster_backup_*.json
+
+# Lock files (optional - uncomment if you want to ignore)
+# poetry.lock
+# uv.lock

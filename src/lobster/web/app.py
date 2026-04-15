@@ -263,9 +263,7 @@ def memory_page():
                                     st.markdown(
                                         f"**Category:** {metadata.get('category', 'general')}"
                                     )
-                                    st.markdown(
-                                        f"**Tags:** {', '.join(metadata.get('tags', []))}"
-                                    )
+                                    st.markdown(f"**Tags:** {', '.join(metadata.get('tags', []))}")
                                     st.markdown(
                                         f"**Timestamp:** {metadata.get('timestamp', 'N/A')}"
                                     )
@@ -312,7 +310,9 @@ def history_page():
         if conversations:
             for conv in conversations:
                 with st.expander(
-                    f"**{conv['timestamp'][:19]}** - {conv['message_count']} messages - {conv['preview']}...",
+                    f"**{conv['timestamp'][:19]}** - "
+                    f"{conv['message_count']} messages - "
+                    f"{conv['preview']}...",
                     expanded=False,
                 ):
                     for msg in conv["data"].get("messages", []):

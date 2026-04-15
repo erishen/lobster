@@ -68,10 +68,8 @@ def add(content, tag, category):
             "type": "memory",
         }
 
-        console.print(f"[bold blue]Adding memory to OpenClaw...[/]")
-        console.print(
-            f"[dim]Content: {content[:100]}{'...' if len(content) > 100 else ''}[/]"
-        )
+        console.print("[bold blue]Adding memory to OpenClaw...[/]")
+        console.print(f"[dim]Content: {content[:100]}{'...' if len(content) > 100 else ''}[/]")
 
         rag_system = RAGSystem(
             vector_store_type="faiss",
@@ -103,7 +101,7 @@ def add(content, tag, category):
         )
         save_memory_index(index)
 
-        console.print(f"[green]✓[/] Memory added successfully")
+        console.print("[green]✓[/] Memory added successfully")
         console.print(f"[dim]ID: {memory_id}[/]")
         console.print(f"[dim]Category: {category}[/]")
         if tag:
@@ -150,7 +148,9 @@ def list(category, tag, limit):
         table.add_column("Timestamp", style="blue", width=19)
 
         for mem in memories:
-            content_preview = mem["content"][:47] + "..." if len(mem["content"]) > 50 else mem["content"]
+            content_preview = (
+                mem["content"][:47] + "..." if len(mem["content"]) > 50 else mem["content"]
+            )
             tags_str = ", ".join(mem.get("tags", []))[:15]
             timestamp = mem["timestamp"][:19]
 
@@ -177,7 +177,7 @@ def search(query, k):
             console.print("[dim]Add memories using: lobster memory add <content>[/]")
             return
 
-        console.print(f"[bold blue]Searching memories...[/]")
+        console.print("[bold blue]Searching memories...[/]")
         console.print(f"[dim]Query: {query}[/]")
 
         rag_system = RAGSystem(
@@ -240,7 +240,7 @@ def delete(memory_id):
         deleted_memory = index["memories"].pop(memory_to_delete)
         save_memory_index(index)
 
-        console.print(f"[green]✓[/] Memory deleted successfully")
+        console.print("[green]✓[/] Memory deleted successfully")
         console.print(f"[dim]ID: {memory_id}[/]")
         console.print(f"[dim]Content: {deleted_memory['content'][:50]}...[/]")
 
