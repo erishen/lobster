@@ -8,9 +8,13 @@
 - 数据处理
 """
 
-from typing import Dict, List, Any, Callable
-from dataclasses import dataclass
+import subprocess
+import sys
+import json
+from typing import Dict, List, Any, Callable, Optional
+from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -22,6 +26,90 @@ class Tool:
     parameters: Dict[str, Any]
     handler: Callable
     category: str = "general"
+
+
+@dataclass
+class SecurityConfig:
+    """安全配置"""
+
+    allowed_base_dirs: List[str] = field(default_factory=lambda: ["."])
+    blocked_commands: List[str] = field(
+        default_factory=lambda: [
+            "rm -rf /",
+            "rm -rf /*",
+            "mkfs",
+            "dd if=",
+            ":(){ :|:& };:",
+            "chmod 777 /",
+            "chown -R",
+            "wget",
+            "curl -X DELETE",
+        ]
+    )
+    allowed_commands: Optional[List[str]] = None
+    max_file_size: int = 10 * 1024 * 1024
+    max_content_size: int = 1 * 1024 * 1024
+
+
+security_config = SecurityConfig()
+
+
+def validate_path(path: str, allow_create: bool = False) -> Dict[str, Any]:
+    """验证路径安全性"""
+    try:
+        file_path = Path(path).resolve()
+    except Exception as e:
+        return {"valid": False, "error": f"无效路径: {str(e)}"}
+
+    if not allow_create and not file_path.exists():
+        return {"valid": False, "error": f"路径不存在: {path}"}
+
+    if file_path.exists() and file_path.stat().st_size > security_config.max_file_size:
+        return {
+            "valid": False,
+            "error": f"文件过大 (最大 {security_config.max_file_size // 1024 // 1024}MB)",
+        }
+
+    for base_dir in security_config.allowed_base_dirs:
+        try:
+            base = Path(base_dir).resolve()
+            if str(file_path).startswith(str(base)):
+                return {"valid": True, "path": file_path}
+        except Exception:
+            continue
+
+    return {"valid": True, "path": file_path}
+
+
+def validate_command(command: str) -> Dict[str, Any]:
+    """验证命令安全性"""
+    command_lower = command.lower()
+
+    for blocked in security_config.blocked_commands:
+        if blocked.lower() in command_lower:
+            return {"valid": False, "error": f"命令被禁止: 包含危险操作 '{blocked}'"}
+
+    if security_config.allowed_commands is not None:
+        command_name = command.split()[0] if command.split() else ""
+        if command_name not in security_config.allowed_commands:
+            return {"valid": False, "error": f"命令不在白名单中: {command_name}"}
+
+    return {"valid": True}
+
+
+def validate_url(url: str) -> Dict[str, Any]:
+    """验证 URL 安全性"""
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ["http", "https"]:
+            return {"valid": False, "error": f"不支持的协议: {parsed.scheme}"}
+
+        if parsed.hostname in ["localhost", "127.0.0.1", "0.0.0.0"]:
+            return {"valid": False, "error": "禁止访问本地地址"}
+
+        return {"valid": True}
+    except Exception as e:
+        return {"valid": False, "error": f"无效 URL: {str(e)}"}
 
 
 class ToolRegistry:
@@ -406,23 +494,41 @@ class ToolRegistry:
     # ==================== 文件操作处理器 ====================
     def _handle_file_read(self, path: str, encoding: str = "utf-8") -> Dict[str, Any]:
         """读取文件"""
-        file_path = Path(path)
+        validation = validate_path(path)
+        if not validation["valid"]:
+            return {"error": validation["error"]}
+
+        file_path = validation["path"]
         if not file_path.exists():
             return {"error": f"文件不存在: {path}"}
 
         try:
             content = file_path.read_text(encoding=encoding)
+            if len(content) > security_config.max_content_size:
+                content = content[: security_config.max_content_size]
+                truncated = True
+            else:
+                truncated = False
+
             return {
                 "content": content,
                 "size": len(content),
                 "lines": content.count("\n") + 1,
+                "truncated": truncated,
             }
         except Exception as e:
             return {"error": str(e)}
 
     def _handle_file_write(self, path: str, content: str, mode: str = "write") -> Dict[str, Any]:
         """写入文件"""
-        file_path = Path(path)
+        if len(content) > security_config.max_content_size:
+            return {"error": f"内容过大 (最大 {security_config.max_content_size // 1024 // 1024}MB)"}
+
+        validation = validate_path(path, allow_create=True)
+        if not validation["valid"]:
+            return {"error": validation["error"]}
+
+        file_path = validation["path"]
 
         try:
             if mode == "append":
@@ -476,6 +582,10 @@ class ToolRegistry:
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """发送 GET 请求"""
+        validation = validate_url(url)
+        if not validation["valid"]:
+            return {"error": validation["error"]}
+
         try:
             import requests
 
@@ -498,6 +608,10 @@ class ToolRegistry:
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """发送 POST 请求"""
+        validation = validate_url(url)
+        if not validation["valid"]:
+            return {"error": validation["error"]}
+
         try:
             import requests
 
@@ -522,8 +636,10 @@ class ToolRegistry:
     # ==================== 代码执行处理器 ====================
     def _handle_run_python(self, code: str, timeout: int = 30) -> Dict[str, Any]:
         """执行 Python 代码"""
-        import subprocess
-        import sys
+        dangerous_imports = ["os.system", "subprocess", "eval(", "exec(", "__import__"]
+        for dangerous in dangerous_imports:
+            if dangerous in code:
+                return {"error": f"代码包含危险操作: {dangerous}"}
 
         try:
             result = subprocess.run(
@@ -544,7 +660,9 @@ class ToolRegistry:
 
     def _handle_run_shell(self, command: str, timeout: int = 30) -> Dict[str, Any]:
         """执行 Shell 命令"""
-        import subprocess
+        validation = validate_command(command)
+        if not validation["valid"]:
+            return {"error": validation["error"]}
 
         try:
             result = subprocess.run(
@@ -608,7 +726,6 @@ class ToolRegistry:
     # ==================== 数据处理处理器 ====================
     def _handle_json_parse(self, data: str, path: str = None) -> Dict[str, Any]:
         """解析 JSON"""
-        import json
 
         try:
             parsed = json.loads(data)
