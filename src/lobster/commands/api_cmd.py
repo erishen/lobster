@@ -1,11 +1,34 @@
 """API Server 命令模块 - 供 OpenClaw 调用"""
 
+import os
+import secrets
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 console = Console()
+
+API_KEY_ENV = "LOBSTER_API_KEY"
+API_KEY_FILE = ".lobster_api_key"
+
+
+def get_or_create_api_key() -> str:
+    """获取或创建 API Key"""
+    api_key = os.environ.get(API_KEY_ENV)
+    if api_key:
+        return api_key
+
+    from pathlib import Path
+
+    key_file = Path(API_KEY_FILE)
+    if key_file.exists():
+        return key_file.read_text().strip()
+
+    api_key = secrets.token_urlsafe(32)
+    key_file.write_text(api_key)
+    key_file.chmod(0o600)
+    return api_key
 
 
 @click.group()
@@ -18,18 +41,22 @@ def api():
 @click.option("--host", "-h", default="0.0.0.0", help="服务地址")
 @click.option("--port", "-p", default=8000, help="服务端口")
 @click.option("--reload", "-r", is_flag=True, help="启用热重载")
-def serve(host, port, reload):
+@click.option("--api-key", "-k", default=None, help="API Key (留空则自动生成)")
+@click.option("--no-auth", is_flag=True, help="禁用认证 (不推荐)")
+def serve(host, port, reload, api_key, no_auth):
     """启动 API 服务器 - lobster api serve
 
     示例:
         lobster api serve
         lobster api serve -h 0.0.0.0 -p 8080
+        lobster api serve --api-key your-secret-key
     """
     console.print(Panel("🚀 [bold cyan]启动 API 服务器[/bold cyan]", border_style="blue"))
 
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, HTTPException, Depends, Security
         from fastapi.middleware.cors import CORSMiddleware
+        from fastapi.security import APIKeyHeader
         import uvicorn
 
         app = FastAPI(
@@ -46,6 +73,27 @@ def serve(host, port, reload):
             allow_headers=["*"],
         )
 
+        if not no_auth:
+            if api_key:
+                current_api_key = api_key
+            else:
+                current_api_key = get_or_create_api_key()
+
+            api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+            async def verify_api_key(api_key: str = Security(api_key_header)):
+                if api_key != current_api_key:
+                    raise HTTPException(status_code=401, detail="Invalid API Key")
+                return api_key
+
+            console.print(f"\n🔑 [bold yellow]API Key:[/] {current_api_key}")
+            console.print("[dim]请在请求头中添加 X-API-Key[/]")
+        else:
+            console.print("\n⚠️ [bold red]警告: 认证已禁用[/]")
+
+            async def verify_api_key():
+                return None
+
         @app.get("/")
         def root():
             return {
@@ -59,21 +107,21 @@ def serve(host, port, reload):
             return {"status": "healthy"}
 
         @app.get("/tools")
-        def list_tools():
+        def list_tools(api_key: str = Depends(verify_api_key)):
             """列出所有可用工具 - OpenClaw 可调用"""
             from lobster.core.tools import registry
 
             return {"tools": registry.list_all(), "count": len(registry.list_all())}
 
         @app.get("/tools/openai")
-        def get_openai_tools():
+        def get_openai_tools(api_key: str = Depends(verify_api_key)):
             """获取 OpenAI Function Calling 格式的工具列表"""
             from lobster.core.tools import registry
 
             return {"tools": registry.get_openai_tools()}
 
         @app.get("/tools/{tool_name}")
-        def get_tool(tool_name: str):
+        def get_tool(tool_name: str, api_key: str = Depends(verify_api_key)):
             """获取单个工具详情"""
             from lobster.core.tools import registry
 
@@ -89,7 +137,7 @@ def serve(host, port, reload):
             }
 
         @app.post("/tools/{tool_name}/execute")
-        def execute_tool(tool_name: str, parameters: dict):
+        def execute_tool(tool_name: str, parameters: dict, api_key: str = Depends(verify_api_key)):
             """执行工具 - OpenClaw 调用入口"""
             from lobster.core.tools import registry
 
@@ -97,7 +145,9 @@ def serve(host, port, reload):
             return result
 
         @app.post("/chat")
-        def chat_endpoint(message: str, model: str = "ollama/gemma3"):
+        def chat_endpoint(
+            message: str, model: str = "ollama/gemma3", api_key: str = Depends(verify_api_key)
+        ):
             from lobster.core.llm_client import get_llm_client
 
             llm = get_llm_client(model)
@@ -105,7 +155,7 @@ def serve(host, port, reload):
             return {"response": response, "model": model}
 
         @app.get("/memory")
-        def list_memories():
+        def list_memories(api_key: str = Depends(verify_api_key)):
             from lobster.core.memory_store import EnhancedMemoryManager
 
             memory = EnhancedMemoryManager()
@@ -113,7 +163,12 @@ def serve(host, port, reload):
             return {"memories": memories, "count": len(memories)}
 
         @app.post("/memory")
-        def add_memory(content: str, tags: str = "", category: str = "general"):
+        def add_memory(
+            content: str,
+            tags: str = "",
+            category: str = "general",
+            api_key: str = Depends(verify_api_key),
+        ):
             from lobster.core.memory_store import EnhancedMemoryManager
 
             memory = EnhancedMemoryManager()
@@ -122,7 +177,7 @@ def serve(host, port, reload):
             return {"id": memory_id, "status": "added"}
 
         @app.get("/search")
-        def search_memories(q: str):
+        def search_memories(q: str, api_key: str = Depends(verify_api_key)):
             from lobster.core.memory_store import EnhancedMemoryManager
 
             memory = EnhancedMemoryManager()
