@@ -8,13 +8,52 @@
 - 数据处理
 """
 
+from __future__ import annotations
+
 import subprocess
 import sys
 import json
+import time
+import functools
 from typing import Dict, List, Any, Callable, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse
+
+from lobster.core.errors import (
+    ErrorCode,
+    LobsterError,
+    error_response,
+    success_response,
+)
+from lobster.core.stats import stats_tracker
+from lobster.core.cache import tool_cache
+from lobster.core.investment import register_investment_tools
+
+
+def measure_performance(func):
+    """性能监控装饰器"""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        try:
+            result = func(*args, **kwargs)
+            duration_ms = (time.time() - start_time) * 1000
+
+            from lobster.core.logger import logger
+
+            logger.performance(func.__name__, duration_ms)
+            return result
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+
+            from lobster.core.logger import logger
+
+            logger.error(f"{func.__name__} failed after {duration_ms:.2f}ms: {str(e)}")
+            raise
+
+    return wrapper
 
 
 @dataclass
@@ -59,15 +98,24 @@ def validate_path(path: str, allow_create: bool = False) -> Dict[str, Any]:
     try:
         file_path = Path(path).resolve()
     except Exception as e:
-        return {"valid": False, "error": f"无效路径: {str(e)}"}
+        return {
+            "valid": False,
+            "error": LobsterError(ErrorCode.PATH_INVALID, f"无效路径: {str(e)}"),
+        }
 
     if not allow_create and not file_path.exists():
-        return {"valid": False, "error": f"路径不存在: {path}"}
+        return {
+            "valid": False,
+            "error": LobsterError(ErrorCode.FILE_NOT_FOUND, f"路径不存在: {path}"),
+        }
 
     if file_path.exists() and file_path.stat().st_size > security_config.max_file_size:
         return {
             "valid": False,
-            "error": f"文件过大 (最大 {security_config.max_file_size // 1024 // 1024}MB)",
+            "error": LobsterError(
+                ErrorCode.FILE_TOO_LARGE,
+                f"文件过大 (最大 {security_config.max_file_size // 1024 // 1024}MB)",
+            ),
         }
 
     for base_dir in security_config.allowed_base_dirs:
@@ -87,12 +135,24 @@ def validate_command(command: str) -> Dict[str, Any]:
 
     for blocked in security_config.blocked_commands:
         if blocked.lower() in command_lower:
-            return {"valid": False, "error": f"命令被禁止: 包含危险操作 '{blocked}'"}
+            return {
+                "valid": False,
+                "error": LobsterError(
+                    ErrorCode.COMMAND_BLOCKED,
+                    f"命令被禁止: 包含危险操作 '{blocked}'",
+                ),
+            }
 
     if security_config.allowed_commands is not None:
         command_name = command.split()[0] if command.split() else ""
         if command_name not in security_config.allowed_commands:
-            return {"valid": False, "error": f"命令不在白名单中: {command_name}"}
+            return {
+                "valid": False,
+                "error": LobsterError(
+                    ErrorCode.COMMAND_BLOCKED,
+                    f"命令不在白名单中: {command_name}",
+                ),
+            }
 
     return {"valid": True}
 
@@ -102,14 +162,23 @@ def validate_url(url: str) -> Dict[str, Any]:
     try:
         parsed = urlparse(url)
         if parsed.scheme not in ["http", "https"]:
-            return {"valid": False, "error": f"不支持的协议: {parsed.scheme}"}
+            return {
+                "valid": False,
+                "error": LobsterError(
+                    ErrorCode.URL_INVALID,
+                    f"不支持的协议: {parsed.scheme}",
+                ),
+            }
 
         if parsed.hostname in ["localhost", "127.0.0.1", "0.0.0.0"]:
-            return {"valid": False, "error": "禁止访问本地地址"}
+            return {
+                "valid": False,
+                "error": LobsterError(ErrorCode.URL_BLOCKED, "禁止访问本地地址"),
+            }
 
         return {"valid": True}
     except Exception as e:
-        return {"valid": False, "error": f"无效 URL: {str(e)}"}
+        return {"valid": False, "error": LobsterError(ErrorCode.URL_INVALID, f"无效 URL: {str(e)}")}
 
 
 class ToolRegistry:
@@ -433,6 +502,9 @@ class ToolRegistry:
             )
         )
 
+        # ==================== 投资工具 ====================
+        register_investment_tools(self)
+
     def register(self, tool: Tool):
         """注册工具"""
         self._tools[tool.name] = tool
@@ -479,28 +551,85 @@ class ToolRegistry:
             for tool in self._tools.values()
         ]
 
-    def execute(self, name: str, **kwargs) -> Dict[str, Any]:
-        """执行工具"""
+    def execute(self, name: str, use_cache: bool = True, **kwargs) -> Dict[str, Any]:
+        """执行工具
+
+        Args:
+            name: 工具名称
+            use_cache: 是否使用缓存 (默认 True)
+            **kwargs: 工具参数
+        """
+        from lobster.core.logger import logger
+
+        logger.tool_call(name, kwargs)
+
         tool = self.get(name)
         if not tool:
-            return {"success": False, "error": f"Tool not found: {name}"}
+            logger.error(f"Tool not found: {name}")
+            stats_tracker.record_call(name, False, 0, f"Tool not found: {name}")
+            return error_response(
+                ErrorCode.TOOL_NOT_FOUND,
+                f"工具不存在: {name}",
+                {"tool_name": name},
+            )
 
+        if use_cache:
+            cached_result = tool_cache.get(name, kwargs)
+            if cached_result is not None:
+                logger.info(f"[Cache] Hit for {name}")
+                return success_response(cached_result, 0, cached=True)
+
+        start_time = time.time()
         try:
             result = tool.handler(**kwargs)
-            return {"success": True, "result": result}
+            duration_ms = (time.time() - start_time) * 1000
+
+            if isinstance(result, dict) and "error" in result:
+                logger.tool_result(name, False, result["error"])
+                stats_tracker.record_call(name, False, duration_ms, result["error"])
+                return error_response(
+                    ErrorCode.TOOL_EXECUTION_ERROR,
+                    result["error"],
+                    {"tool_name": name, "duration_ms": duration_ms},
+                )
+
+            logger.tool_result(name, True, result)
+            logger.performance(f"tool_{name}", duration_ms)
+            stats_tracker.record_call(name, True, duration_ms)
+
+            if use_cache and isinstance(result, dict):
+                tool_cache.set(name, kwargs, result)
+
+            return success_response(result, duration_ms)
+        except LobsterError as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.tool_result(name, False, e.message)
+            logger.exception(f"Tool {name} failed: {e.message}")
+            stats_tracker.record_call(name, False, duration_ms, e.message)
+            return e.to_dict()
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            duration_ms = (time.time() - start_time) * 1000
+            error_msg = str(e)
+            logger.tool_result(name, False, error_msg)
+            logger.exception(f"Tool {name} failed: {error_msg}")
+            stats_tracker.record_call(name, False, duration_ms, error_msg)
+            return error_response(
+                ErrorCode.TOOL_EXECUTION_ERROR,
+                error_msg,
+                {"tool_name": name, "duration_ms": duration_ms},
+            )
 
     # ==================== 文件操作处理器 ====================
     def _handle_file_read(self, path: str, encoding: str = "utf-8") -> Dict[str, Any]:
         """读取文件"""
         validation = validate_path(path)
         if not validation["valid"]:
-            return {"error": validation["error"]}
+            error = validation["error"]
+            return {"error": error.message if isinstance(error, LobsterError) else str(error)}
 
         file_path = validation["path"]
         if not file_path.exists():
-            return {"error": f"文件不存在: {path}"}
+            return {"error": LobsterError(ErrorCode.FILE_NOT_FOUND, f"文件不存在: {path}").message}
 
         try:
             content = file_path.read_text(encoding=encoding)
@@ -516,17 +645,25 @@ class ToolRegistry:
                 "lines": content.count("\n") + 1,
                 "truncated": truncated,
             }
+        except UnicodeDecodeError as e:
+            return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {str(e)}").message}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, str(e)).message}
 
     def _handle_file_write(self, path: str, content: str, mode: str = "write") -> Dict[str, Any]:
         """写入文件"""
         if len(content) > security_config.max_content_size:
-            return {"error": f"内容过大 (最大 {security_config.max_content_size // 1024 // 1024}MB)"}
+            return {
+                "error": LobsterError(
+                    ErrorCode.FILE_TOO_LARGE,
+                    f"内容过大 (最大 {security_config.max_content_size // 1024 // 1024}MB)",
+                ).message
+            }
 
         validation = validate_path(path, allow_create=True)
         if not validation["valid"]:
-            return {"error": validation["error"]}
+            error = validation["error"]
+            return {"error": error.message if isinstance(error, LobsterError) else str(error)}
 
         file_path = validation["path"]
 
@@ -539,14 +676,14 @@ class ToolRegistry:
 
             return {"path": str(file_path.absolute()), "size": len(content)}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.FILE_WRITE_ERROR, str(e)).message}
 
     def _handle_file_list(self, path: str = ".", pattern: str = "*") -> Dict[str, Any]:
         """列出目录内容"""
         dir_path = Path(path)
 
         if not dir_path.exists():
-            return {"error": f"目录不存在: {path}"}
+            return {"error": LobsterError(ErrorCode.FILE_NOT_FOUND, f"目录不存在: {path}").message}
 
         files = []
         for item in dir_path.glob(pattern):
@@ -566,25 +703,26 @@ class ToolRegistry:
         file_path = Path(path)
 
         if not file_path.exists():
-            return {"error": f"文件不存在: {path}"}
+            return {"error": LobsterError(ErrorCode.FILE_NOT_FOUND, f"文件不存在: {path}").message}
 
         try:
             file_path.unlink()
             return {"deleted": str(file_path)}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.FILE_DELETE_ERROR, str(e)).message}
 
     # ==================== 网络请求处理器 ====================
     def _handle_http_get(
         self,
         url: str,
-        headers: Dict[str, str] = None,
+        headers: Optional[Dict[str, str]] = None,
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """发送 GET 请求"""
         validation = validate_url(url)
         if not validation["valid"]:
-            return {"error": validation["error"]}
+            error = validation["error"]
+            return {"error": error.message if isinstance(error, LobsterError) else str(error)}
 
         try:
             import requests
@@ -596,21 +734,22 @@ class ToolRegistry:
                 "headers": dict(response.headers),
             }
         except ImportError:
-            return {"error": "requests 库未安装"}
+            return {"error": LobsterError(ErrorCode.NETWORK_ERROR, "requests 库未安装").message}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.REQUEST_FAILED, str(e)).message}
 
     def _handle_http_post(
         self,
         url: str,
-        data: Dict[str, Any] = None,
-        headers: Dict[str, str] = None,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """发送 POST 请求"""
         validation = validate_url(url)
         if not validation["valid"]:
-            return {"error": validation["error"]}
+            error = validation["error"]
+            return {"error": error.message if isinstance(error, LobsterError) else str(error)}
 
         try:
             import requests
@@ -622,9 +761,9 @@ class ToolRegistry:
                 "headers": dict(response.headers),
             }
         except ImportError:
-            return {"error": "requests 库未安装"}
+            return {"error": LobsterError(ErrorCode.NETWORK_ERROR, "requests 库未安装").message}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.REQUEST_FAILED, str(e)).message}
 
     def _handle_web_search(self, query: str, limit: int = 5) -> Dict[str, Any]:
         """网络搜索"""
@@ -639,7 +778,11 @@ class ToolRegistry:
         dangerous_imports = ["os.system", "subprocess", "eval(", "exec(", "__import__"]
         for dangerous in dangerous_imports:
             if dangerous in code:
-                return {"error": f"代码包含危险操作: {dangerous}"}
+                return {
+                    "error": LobsterError(
+                        ErrorCode.CODE_DANGEROUS, f"代码包含危险操作: {dangerous}"
+                    ).message
+                }
 
         try:
             result = subprocess.run(
@@ -654,15 +797,16 @@ class ToolRegistry:
                 "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {"error": f"执行超时 ({timeout}秒)"}
+            return {"error": LobsterError(ErrorCode.CODE_TIMEOUT, f"执行超时 ({timeout}秒)").message}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.CODE_ERROR, str(e)).message}
 
     def _handle_run_shell(self, command: str, timeout: int = 30) -> Dict[str, Any]:
         """执行 Shell 命令"""
         validation = validate_command(command)
         if not validation["valid"]:
-            return {"error": validation["error"]}
+            error = validation["error"]
+            return {"error": error.message if isinstance(error, LobsterError) else str(error)}
 
         try:
             result = subprocess.run(
@@ -674,9 +818,9 @@ class ToolRegistry:
                 "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {"error": f"执行超时 ({timeout}秒)"}
+            return {"error": LobsterError(ErrorCode.COMMAND_TIMEOUT, f"执行超时 ({timeout}秒)").message}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": LobsterError(ErrorCode.COMMAND_FAILED, str(e)).message}
 
     # ==================== 系统交互处理器 ====================
     def _handle_notify(self, message: str, title: str = "OpenClaw") -> Dict[str, Any]:
@@ -724,7 +868,7 @@ class ToolRegistry:
             return {"error": str(e)}
 
     # ==================== 数据处理处理器 ====================
-    def _handle_json_parse(self, data: str, path: str = None) -> Dict[str, Any]:
+    def _handle_json_parse(self, data: str, path: Optional[str] = None) -> Dict[str, Any]:
         """解析 JSON"""
 
         try:
@@ -739,9 +883,11 @@ class ToolRegistry:
 
             return {"data": parsed}
         except json.JSONDecodeError as e:
-            return {"error": f"JSON 解析错误: {str(e)}"}
+            return {
+                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {str(e)}").message
+            }
         except (KeyError, IndexError) as e:
-            return {"error": f"路径不存在: {str(e)}"}
+            return {"error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {str(e)}").message}
 
     def _handle_text_process(self, text: str, operation: str) -> Dict[str, Any]:
         """文本处理"""
@@ -759,7 +905,9 @@ class ToolRegistry:
         }
 
         if operation not in operations:
-            return {"error": f"未知操作: {operation}"}
+            return {
+                "error": LobsterError(ErrorCode.TEXT_PROCESS_ERROR, f"未知操作: {operation}").message
+            }
 
         return {"result": operations[operation]}
 
@@ -792,7 +940,7 @@ class ToolRegistry:
             result = eval_expr(tree.body)
             return {"expression": expression, "result": result}
         except Exception as e:
-            return {"error": f"计算错误: {str(e)}"}
+            return {"error": LobsterError(ErrorCode.CALCULATE_ERROR, f"计算错误: {str(e)}").message}
 
 
 registry = ToolRegistry()
