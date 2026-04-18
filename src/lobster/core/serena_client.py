@@ -1,6 +1,9 @@
 """Serena 客户端工具 - 直接调用 Serena Python API
 
 提供代码理解、重构等 IDE 级别能力
+
+注意: Serena 工具需要通过 MCP 协议使用。
+如果 Serena MCP 已配置，可以直接使用 mcp_serena-mcp_* 工具。
 """
 
 from __future__ import annotations
@@ -10,8 +13,6 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
 
 if TYPE_CHECKING:
-    from serena.agent import SerenaAgent
-    from serena.project import Project
     from lobster.core.tools import ToolRegistry
 
 
@@ -20,15 +21,13 @@ class SerenaConfig:
     """Serena 配置"""
 
     project_path: str
-    language_backend: str = "LSP"  # LSP or JETBRAINS
+    language_backend: str = "LSP"
 
 
 class SerenaClient:
-    """Serena 客户端 - 直接调用 Serena Python API"""
+    """Serena 客户端 - 提供 Serena 工具信息"""
 
     _instance: Optional["SerenaClient"] = None
-    _agent: Optional["SerenaAgent"] = None
-    _project: Optional["Project"] = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -47,7 +46,7 @@ class SerenaClient:
 
     def is_initialized(self) -> bool:
         """检查是否已初始化"""
-        return self._agent is not None
+        return self.is_available()
 
     def auto_initialize(self) -> Dict[str, Any]:
         """从配置自动初始化"""
@@ -68,54 +67,28 @@ class SerenaClient:
         if not self.is_available():
             return {
                 "success": False,
-                "error": "Serena 未安装。请运行: pip install serena-ai",
+                "error": "Serena 未安装。请运行: pip install serena-agent",
             }
 
-        try:
-            from serena.config.serena_config import SerenaConfig as SC, LanguageBackend
-            from serena.agent import SerenaAgent
-            from serena.project import Project
+        self._config = SerenaConfig(
+            project_path=project_path,
+            language_backend=language_backend,
+        )
 
-            self._config = SerenaConfig(
-                project_path=project_path,
-                language_backend=language_backend,
-            )
-
-            lb = (
-                LanguageBackend.LSP
-                if language_backend.upper() == "LSP"
-                else LanguageBackend.JETBRAINS
-            )
-
-            serena_config = SC.load()
-            serena_config.language_backend = lb
-
-            self._agent = SerenaAgent(serena_config)
-
-            project = Project.from_path(project_path)
-            self._agent.activate_project(project)
-            self._project = project
-
-            return {
-                "success": True,
-                "project": project_path,
-                "language_backend": language_backend,
-                "languages": [lang.value for lang in self._agent.get_active_lsp_languages()],
-            }
-
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-
-    def _ensure_initialized(self) -> Dict[str, Any]:
-        """确保已初始化"""
-        if self._agent is not None:
-            return {"success": True}
-
-        result = self.auto_initialize()
-        if not result.get("success"):
-            return result
-
-        return {"success": True}
+        return {
+            "success": True,
+            "project": project_path,
+            "language_backend": language_backend,
+            "message": "Serena 已安装。请使用 MCP 工具 (mcp_serena-mcp_*) 进行代码分析。",
+            "available_tools": [
+                "mcp_serena-mcp_find_symbol",
+                "mcp_serena-mcp_get_symbols_overview",
+                "mcp_serena-mcp_find_referencing_symbols",
+                "mcp_serena-mcp_search_for_pattern",
+                "mcp_serena-mcp_read_file",
+                "mcp_serena-mcp_list_dir",
+            ],
+        }
 
     def get_symbols_overview(self, relative_path: str, depth: int = 0) -> Dict[str, Any]:
         """获取文件符号概览
@@ -124,24 +97,11 @@ class SerenaClient:
             relative_path: 相对文件路径
             depth: 深度 (默认 0)
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.symbol_tools import GetSymbolsOverviewTool
-
-            tool = GetSymbolsOverviewTool(self._agent)
-            result = tool.get_symbol_overview(relative_path, depth=depth)
-
-            return {
-                "success": True,
-                "file": relative_path,
-                "symbols": result,
-            }
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_get_symbols_overview",
+            "relative_path": relative_path,
+            "depth": depth,
+        }
 
     def find_symbol(
         self,
@@ -156,24 +116,12 @@ class SerenaClient:
             relative_path: 相对文件路径 (可选)
             include_body: 是否包含函数体
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.symbol_tools import FindSymbolTool
-
-            tool = FindSymbolTool(self._agent)
-            result = tool.apply(
-                name=name,
-                relative_path=relative_path or "",
-                include_body=include_body,
-            )
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_find_symbol",
+            "name": name,
+            "relative_path": relative_path,
+            "include_body": include_body,
+        }
 
     def find_referencing_symbols(self, name: str, relative_path: str) -> Dict[str, Any]:
         """查找引用符号
@@ -182,20 +130,11 @@ class SerenaClient:
             name: 符号名称
             relative_path: 相对文件路径
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.symbol_tools import FindReferencingSymbolsTool
-
-            tool = FindReferencingSymbolsTool(self._agent)
-            result = tool.apply(name=name, relative_path=relative_path)
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_find_referencing_symbols",
+            "name": name,
+            "relative_path": relative_path,
+        }
 
     def rename_symbol(
         self,
@@ -210,24 +149,12 @@ class SerenaClient:
             relative_path: 相对文件路径
             new_name: 新名称
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.symbol_tools import RenameSymbolTool
-
-            tool = RenameSymbolTool(self._agent)
-            result = tool.apply(
-                name=name,
-                relative_path=relative_path,
-                new_name=new_name,
-            )
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_rename_symbol",
+            "name": name,
+            "relative_path": relative_path,
+            "new_name": new_name,
+        }
 
     def replace_symbol_body(
         self,
@@ -242,24 +169,12 @@ class SerenaClient:
             relative_path: 相对文件路径
             new_body: 新的函数体
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.symbol_tools import ReplaceSymbolBodyTool
-
-            tool = ReplaceSymbolBodyTool(self._agent)
-            result = tool.apply(
-                name=name,
-                relative_path=relative_path,
-                new_body=new_body,
-            )
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_replace_symbol_body",
+            "name": name,
+            "relative_path": relative_path,
+            "new_body": new_body,
+        }
 
     def search_for_pattern(
         self,
@@ -274,24 +189,12 @@ class SerenaClient:
             relative_dir: 相对目录
             file_pattern: 文件匹配模式
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.file_tools import SearchForPatternTool
-
-            tool = SearchForPatternTool(self._agent)
-            result = tool.apply(
-                pattern=pattern,
-                relative_dir=relative_dir,
-                file_pattern=file_pattern,
-            )
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_search_for_pattern",
+            "pattern": pattern,
+            "relative_dir": relative_dir,
+            "file_pattern": file_pattern,
+        }
 
     def list_dir(self, relative_path: str = ".", recursive: bool = False) -> Dict[str, Any]:
         """列出目录
@@ -300,23 +203,11 @@ class SerenaClient:
             relative_path: 相对路径
             recursive: 是否递归
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.file_tools import ListDirTool
-
-            tool = ListDirTool(self._agent)
-            result = tool.apply(
-                relative_path=relative_path,
-                recursive=recursive,
-            )
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_list_dir",
+            "relative_path": relative_path,
+            "recursive": recursive,
+        }
 
     def read_file(
         self, relative_path: str, start_line: int = 1, end_line: int = -1
@@ -328,41 +219,19 @@ class SerenaClient:
             start_line: 起始行
             end_line: 结束行
         """
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.file_tools import ReadFileTool
-
-            tool = ReadFileTool(self._agent)
-            result = tool.apply(
-                relative_path=relative_path,
-                start_line=start_line,
-                end_line=end_line,
-            )
-
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_read_file",
+            "relative_path": relative_path,
+            "start_line": start_line,
+            "end_line": end_line,
+        }
 
     def get_current_config(self) -> Dict[str, Any]:
         """获取当前配置"""
-        init_result = self._ensure_initialized()
-        if not init_result.get("success"):
-            return init_result
-
-        try:
-            from serena.tools.config_tools import GetCurrentConfigTool
-
-            tool = GetCurrentConfigTool(self._agent)
-            result = tool.apply()
-
-            return {"success": True, "config": result}
-
-        except Exception as e:
-            return {"error": str(e)}
+        return {
+            "error": "请使用 MCP 工具: mcp_serena-mcp_get_current_config",
+            "config": self._config.__dict__ if self._config else None,
+        }
 
 
 serena_client = SerenaClient()
@@ -382,7 +251,7 @@ def register_serena_tools(registry: "ToolRegistry"):  # type: ignore[name-define
     registry.register(
         Tool(
             name="serena_init",
-            description="初始化 Serena 客户端，连接到指定项目",
+            description="初始化 Serena 客户端，检查 Serena 是否可用并返回 MCP 工具列表",
             parameters={
                 "type": "object",
                 "properties": {
@@ -409,7 +278,7 @@ def register_serena_tools(registry: "ToolRegistry"):  # type: ignore[name-define
     registry.register(
         Tool(
             name="serena_symbols",
-            description="获取文件的符号概览 (类、函数、变量等)",
+            description="获取文件的符号概览 (类、函数、变量等)。建议使用 MCP 工具: mcp_serena-mcp_get_symbols_overview",
             parameters={
                 "type": "object",
                 "properties": {
@@ -435,7 +304,7 @@ def register_serena_tools(registry: "ToolRegistry"):  # type: ignore[name-define
     registry.register(
         Tool(
             name="serena_find_symbol",
-            description="查找符号 (类、函数、变量)",
+            description="查找符号 (类、函数、变量)。建议使用 MCP 工具: mcp_serena-mcp_find_symbol",
             parameters={
                 "type": "object",
                 "properties": {
@@ -465,7 +334,7 @@ def register_serena_tools(registry: "ToolRegistry"):  # type: ignore[name-define
     registry.register(
         Tool(
             name="serena_find_refs",
-            description="查找符号的所有引用",
+            description="查找符号的所有引用。建议使用 MCP 工具: mcp_serena-mcp_find_referencing_symbols",
             parameters={
                 "type": "object",
                 "properties": {
@@ -489,66 +358,8 @@ def register_serena_tools(registry: "ToolRegistry"):  # type: ignore[name-define
 
     registry.register(
         Tool(
-            name="serena_rename",
-            description="重命名符号 (自动更新所有引用)",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "当前符号名称",
-                    },
-                    "relative_path": {
-                        "type": "string",
-                        "description": "相对文件路径",
-                    },
-                    "new_name": {
-                        "type": "string",
-                        "description": "新名称",
-                    },
-                },
-                "required": ["name", "relative_path", "new_name"],
-            },
-            handler=lambda name, relative_path, new_name: client.rename_symbol(
-                name, relative_path, new_name
-            ),
-            category="serena",
-        )
-    )
-
-    registry.register(
-        Tool(
-            name="serena_replace_body",
-            description="替换符号体 (函数实现)",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "符号名称",
-                    },
-                    "relative_path": {
-                        "type": "string",
-                        "description": "相对文件路径",
-                    },
-                    "new_body": {
-                        "type": "string",
-                        "description": "新的函数体",
-                    },
-                },
-                "required": ["name", "relative_path", "new_body"],
-            },
-            handler=lambda name, relative_path, new_body: client.replace_symbol_body(
-                name, relative_path, new_body
-            ),
-            category="serena",
-        )
-    )
-
-    registry.register(
-        Tool(
             name="serena_search",
-            description="正则表达式搜索代码",
+            description="正则表达式搜索代码。建议使用 MCP 工具: mcp_serena-mcp_search_for_pattern",
             parameters={
                 "type": "object",
                 "properties": {
