@@ -52,6 +52,8 @@ class LobsterConfig:
     ai_model: str = "deepseek-chat"
     openai_api_key: str = ""
 
+    serena_project_path: str = ""
+
     api_cache_ttl: int = 60
     ai_cache_ttl: int = 3600
 
@@ -90,6 +92,8 @@ class LobsterConfig:
         self.ai_model = get_env("AI_MODEL", self.ai_model)
         self.openai_api_key = get_env("OPENAI_API_KEY", self.openai_api_key)
 
+        self.serena_project_path = get_env("SERENA_PROJECT_PATH", self.serena_project_path)
+
         self.api_cache_ttl = get_env("API_CACHE_TTL", self.api_cache_ttl, int)
         self.ai_cache_ttl = get_env("AI_CACHE_TTL", self.ai_cache_ttl, int)
 
@@ -122,6 +126,11 @@ class LobsterConfig:
         """是否配置了 DeepSeek API"""
         return bool(self.deepseek_api_key and not self.deepseek_api_key.startswith("your_"))
 
+    @property
+    def has_serena(self) -> bool:
+        """是否配置了 Serena 项目路径"""
+        return bool(self.serena_project_path)
+
     def to_dict(self) -> dict:
         """转换为字典（隐藏敏感信息）"""
         return {
@@ -130,6 +139,8 @@ class LobsterConfig:
             "has_tushare": self.has_tushare,
             "has_finnhub": self.has_finnhub,
             "has_deepseek": self.has_deepseek,
+            "has_serena": self.has_serena,
+            "serena_project_path": self.serena_project_path,
             "ai_model": self.ai_model,
             "api_cache_ttl": self.api_cache_ttl,
             "ai_cache_ttl": self.ai_cache_ttl,
