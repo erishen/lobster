@@ -1,4 +1,4 @@
-.PHONY: help install test lint clean
+.PHONY: help install test lint clean serena-init serena-status serena-symbols serena-find
 
 help:
 	@echo "Lobster CLI - Available commands:"
@@ -30,6 +30,12 @@ help:
 	@echo "  lobster project --help   - Project management"
 	@echo "  lobster util-tools --help- Utility tools"
 	@echo "  lobster openclaw --help  - OpenClaw management"
+	@echo ""
+	@echo "Serena Code Analysis:"
+	@echo "  make serena-init        - Initialize Serena for current project"
+	@echo "  make serena-status      - Check Serena status"
+	@echo "  make serena-symbols     - Get symbols overview of a file"
+	@echo "  make serena-find        - Find a symbol by name"
 
 install:
 	@echo "Installing dependencies..."
@@ -66,3 +72,24 @@ clean:
 	rm -rf .ruff_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+# Serena Code Analysis
+SERENA_PROJECT ?= $(PWD)
+SERENA_FILE ?= src/lobster/core/config.py
+SERENA_SYMBOL ?= LobsterConfig
+
+serena-init:
+	@echo "Initializing Serena for project: $(SERENA_PROJECT)"
+	@PYTHONPATH=src python -c "from lobster.core.serena_client import get_serena_client; import json; client = get_serena_client(); result = client.initialize('$(SERENA_PROJECT)'); print(json.dumps(result, indent=2, ensure_ascii=False))"
+
+serena-status:
+	@echo "Checking Serena status..."
+	@PYTHONPATH=src python -c "from lobster.core.serena_client import get_serena_client; import json; client = get_serena_client(); result = client.get_current_config(); print(json.dumps(result, indent=2, ensure_ascii=False))"
+
+serena-symbols:
+	@echo "Getting symbols overview for: $(SERENA_FILE)"
+	@PYTHONPATH=src python -c "from lobster.core.serena_client import get_serena_client; import json; client = get_serena_client(); client.initialize('$(SERENA_PROJECT)'); result = client.get_symbols_overview('$(SERENA_FILE)', depth=1); print(json.dumps(result, indent=2, ensure_ascii=False) if isinstance(result, dict) else result)"
+
+serena-find:
+	@echo "Finding symbol: $(SERENA_SYMBOL)"
+	@PYTHONPATH=src python -c "from lobster.core.serena_client import get_serena_client; import json; client = get_serena_client(); client.initialize('$(SERENA_PROJECT)'); result = client.find_symbol('$(SERENA_SYMBOL)'); print(json.dumps(result, indent=2, ensure_ascii=False))"
