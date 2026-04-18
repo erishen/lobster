@@ -48,8 +48,15 @@ watch = [
 http = [
     "requests>=2.31.0",
 ]
+serena = [
+    "serena-ai>=1.0.0",
+]
+investment = [
+    "tushare>=1.3.0",
+    "requests>=2.31.0",
+]
 all = [
-    "lobster[dev,web,api,watch,http]",
+    "lobster[dev,web,api,watch,http,serena,investment]",
 ]
 
 [project.scripts]
