@@ -45,6 +45,19 @@ class SerenaClient:
         """检查 Serena 是否可用"""
         return importlib.util.find_spec("serena") is not None
 
+    def is_initialized(self) -> bool:
+        """检查是否已初始化"""
+        return self._agent is not None
+
+    def auto_initialize(self) -> Dict[str, Any]:
+        """从配置自动初始化"""
+        from lobster.core.config import get_config
+
+        config = get_config()
+        if config.has_serena:
+            return self.initialize(config.serena_project_path)
+        return {"success": False, "error": "未配置 SERENA_PROJECT_PATH"}
+
     def initialize(self, project_path: str, language_backend: str = "LSP") -> Dict[str, Any]:
         """初始化 Serena 客户端
 
@@ -93,6 +106,17 @@ class SerenaClient:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def _ensure_initialized(self) -> Dict[str, Any]:
+        """确保已初始化"""
+        if self._agent is not None:
+            return {"success": True}
+
+        result = self.auto_initialize()
+        if not result.get("success"):
+            return result
+
+        return {"success": True}
+
     def get_symbols_overview(self, relative_path: str, depth: int = 0) -> Dict[str, Any]:
         """获取文件符号概览
 
@@ -100,8 +124,9 @@ class SerenaClient:
             relative_path: 相对文件路径
             depth: 深度 (默认 0)
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.symbol_tools import GetSymbolsOverviewTool
@@ -131,8 +156,9 @@ class SerenaClient:
             relative_path: 相对文件路径 (可选)
             include_body: 是否包含函数体
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.symbol_tools import FindSymbolTool
@@ -156,8 +182,9 @@ class SerenaClient:
             name: 符号名称
             relative_path: 相对文件路径
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.symbol_tools import FindReferencingSymbolsTool
@@ -183,8 +210,9 @@ class SerenaClient:
             relative_path: 相对文件路径
             new_name: 新名称
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.symbol_tools import RenameSymbolTool
@@ -214,8 +242,9 @@ class SerenaClient:
             relative_path: 相对文件路径
             new_body: 新的函数体
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.symbol_tools import ReplaceSymbolBodyTool
@@ -245,8 +274,9 @@ class SerenaClient:
             relative_dir: 相对目录
             file_pattern: 文件匹配模式
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.file_tools import SearchForPatternTool
@@ -270,8 +300,9 @@ class SerenaClient:
             relative_path: 相对路径
             recursive: 是否递归
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.file_tools import ListDirTool
@@ -297,8 +328,9 @@ class SerenaClient:
             start_line: 起始行
             end_line: 结束行
         """
-        if not self._agent:
-            return {"error": "Serena 未初始化，请先调用 initialize"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.file_tools import ReadFileTool
@@ -317,8 +349,9 @@ class SerenaClient:
 
     def get_current_config(self) -> Dict[str, Any]:
         """获取当前配置"""
-        if not self._agent:
-            return {"error": "Serena 未初始化"}
+        init_result = self._ensure_initialized()
+        if not init_result.get("success"):
+            return init_result
 
         try:
             from serena.tools.config_tools import GetCurrentConfigTool
