@@ -52,19 +52,15 @@ class TestNotifyBeep:
         assert result.exit_code == 0
 
 
-class TestNotifyTest:
-    """测试通知功能测试"""
+class TestNotifyCheck:
+    """测试通知功能检查"""
 
-    @pytest.mark.skip(reason="test 命令名称与 pytest 冲突")
-    def test_notify_test(self):
-        """测试通知功能"""
-        import lobster.commands.notify_cmd as notify_module
-
-        test_cmd = getattr(notify_module, "test")
+    def test_notify_check(self):
+        """测试通知检查功能"""
         runner = CliRunner()
 
         with patch("lobster.commands.notify_cmd._send_macos"):
-            result = runner.invoke(test_cmd, [])
+            result = runner.invoke(notify, ["check"])
 
             assert result.exit_code == 0
 

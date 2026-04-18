@@ -184,6 +184,60 @@ def serve(host, port, reload, api_key, no_auth):
             results = memory.search_memory(q, method="hybrid")
             return {"results": results, "count": len(results)}
 
+        @app.get("/stats")
+        def get_stats(api_key: str = Depends(verify_api_key)):
+            """获取工具使用统计"""
+            from lobster.core.stats import stats_tracker
+
+            return stats_tracker.get_summary()
+
+        @app.get("/stats/tools/{tool_name}")
+        def get_tool_stats(tool_name: str, api_key: str = Depends(verify_api_key)):
+            """获取单个工具的统计"""
+            from lobster.core.stats import stats_tracker
+
+            stats = stats_tracker.get_stats(tool_name)
+            if not stats:
+                return {"error": f"No stats for tool: {tool_name}"}
+            return stats.to_dict()
+
+        @app.get("/stats/recent")
+        def get_recent_calls(limit: int = 10, api_key: str = Depends(verify_api_key)):
+            """获取最近的工具调用"""
+            from lobster.core.stats import stats_tracker
+
+            return {"calls": stats_tracker.get_recent_calls(limit)}
+
+        @app.get("/cache/stats")
+        def get_cache_stats(api_key: str = Depends(verify_api_key)):
+            """获取缓存统计"""
+            from lobster.core.cache import tool_cache
+
+            return tool_cache.get_stats()
+
+        @app.get("/cache/info")
+        def get_cache_info(api_key: str = Depends(verify_api_key)):
+            """获取缓存详情"""
+            from lobster.core.cache import tool_cache
+
+            return tool_cache.get_cache_info()
+
+        @app.post("/cache/clear")
+        def clear_cache(api_key: str = Depends(verify_api_key)):
+            """清除缓存"""
+            from lobster.core.cache import tool_cache
+
+            tool_cache.clear()
+            return {"status": "cleared"}
+
+        @app.post("/cache/cleanup")
+        def cleanup_cache(api_key: str = Depends(verify_api_key)):
+            """清理过期缓存"""
+            from lobster.core.cache import tool_cache
+
+            expired = tool_cache.cleanup_expired()
+            return {"expired_count": expired}
+
         console.print("\n🌐 [bold green]API 服务器启动成功[/bold green]")
         console.print(f"   地址: http://{host}:{port}")
         console.print(f"   文档: http://{host}:{port}/docs")
@@ -197,7 +251,16 @@ def serve(host, port, reload, api_key, no_auth):
         console.print("  POST /chat      - 对话")
         console.print("  GET  /memory    - 列出记忆")
         console.print("  POST /memory    - 添加记忆")
-        console.print("  GET  /search    - 搜索记忆\n")
+        console.print("  GET  /search    - 搜索记忆")
+        console.print("\n📊 [bold]统计端点:[/]")
+        console.print("  GET  /stats              - 工具使用统计摘要")
+        console.print("  GET  /stats/tools/{name} - 单个工具统计")
+        console.print("  GET  /stats/recent       - 最近调用记录")
+        console.print("\n💾 [bold]缓存端点:[/]")
+        console.print("  GET  /cache/stats  - 缓存统计")
+        console.print("  GET  /cache/info   - 缓存详情")
+        console.print("  POST /cache/clear  - 清除缓存")
+        console.print("  POST /cache/cleanup - 清理过期缓存\n")
 
         uvicorn.run(app, host=host, port=port, reload=reload)
 
@@ -256,6 +319,29 @@ def docs():
     table2.add_row("GET", "/search", "搜索记忆")
 
     console.print(f"{table2}\n")
+
+    table3 = Table(title="统计端点")
+    table3.add_column("方法", style="cyan", width=10)
+    table3.add_column("路径", style="green")
+    table3.add_column("说明", style="yellow")
+
+    table3.add_row("GET", "/stats", "工具使用统计摘要")
+    table3.add_row("GET", "/stats/tools/{name}", "单个工具统计")
+    table3.add_row("GET", "/stats/recent", "最近调用记录")
+
+    console.print(f"{table3}\n")
+
+    table4 = Table(title="缓存端点")
+    table4.add_column("方法", style="cyan", width=10)
+    table4.add_column("路径", style="green")
+    table4.add_column("说明", style="yellow")
+
+    table4.add_row("GET", "/cache/stats", "缓存统计")
+    table4.add_row("GET", "/cache/info", "缓存详情")
+    table4.add_row("POST", "/cache/clear", "清除缓存")
+    table4.add_row("POST", "/cache/cleanup", "清理过期缓存")
+
+    console.print(f"{table4}\n")
     console.print("使用 lobster api serve 启动服务器后访问完整文档")
 
 

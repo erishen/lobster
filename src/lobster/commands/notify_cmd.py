@@ -142,11 +142,24 @@ def beep(sound):
 
 
 @notify.command()
-def test():
-    """测试通知功能"""
-    console.print(Panel("🧪 [bold cyan]测试通知[/bold cyan]", border_style="blue"))
+def check():
+    """检查通知功能 - lobster notify check
 
-    send("这是一条测试通知", "Lobster 测试")
+    示例:
+        lobster notify check
+    """
+    console.print(Panel("🧪 [bold cyan]检查通知[/bold cyan]", border_style="blue"))
+
+    import sys
+
+    if sys.platform == "darwin":
+        _send_macos("这是一条测试通知", "Lobster 检查")
+    elif sys.platform == "linux":
+        _send_linux("这是一条测试通知", "Lobster 检查")
+    elif sys.platform == "win32":
+        _send_windows("这是一条测试通知", "Lobster 检查")
+    else:
+        console.print("[yellow]不支持的平台[/]")
 
     console.print("\n如果收到通知，说明通知功能正常工作")
 
