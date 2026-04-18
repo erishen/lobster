@@ -1,4 +1,4 @@
-.PHONY: help install test lint clean serena-init serena-status serena-symbols serena-find
+.PHONY: help install test lint clean serena-init serena-status serena-symbols serena-find rag-status
 
 help:
 	@echo "Lobster CLI - Available commands:"
@@ -32,10 +32,17 @@ help:
 	@echo "  lobster openclaw --help  - OpenClaw management"
 	@echo ""
 	@echo "Serena Code Analysis:"
-	@echo "  make serena-init        - Initialize Serena for current project"
-	@echo "  make serena-status      - Check Serena status"
-	@echo "  make serena-symbols     - Get symbols overview of a file"
-	@echo "  make serena-find        - Find a symbol by name"
+	@echo "  lobster serena init        - Initialize Serena for current project"
+	@echo "  lobster serena status      - Check Serena status"
+	@echo "  lobster serena symbols <file> - Get symbols overview"
+	@echo "  lobster serena find <symbol>  - Find a symbol by name"
+	@echo "  lobster serena search <pattern> - Search code with regex"
+	@echo ""
+	@echo "RAG Knowledge Base:"
+	@echo "  lobster rag status       - Check knowledge base status"
+	@echo "  lobster rag upload <file>- Upload document to knowledge base"
+	@echo "  lobster rag ask <query>  - Query knowledge base"
+	@echo "  lobster rag models       - List available models"
 
 install:
 	@echo "Installing dependencies..."
@@ -93,3 +100,15 @@ serena-symbols:
 serena-find:
 	@echo "Finding symbol: $(SERENA_SYMBOL)"
 	@PYTHONPATH=src python -c "from lobster.core.serena_client import get_serena_client; import json; client = get_serena_client(); client.initialize('$(SERENA_PROJECT)'); result = client.find_symbol('$(SERENA_SYMBOL)'); print(json.dumps(result, indent=2, ensure_ascii=False))"
+
+# RAG Knowledge Base
+rag-status:
+	@echo "Checking RAG knowledge base status..."
+	@PYTHONPATH=src python -c "
+import requests
+try:
+    r = requests.get('http://localhost:8000/health', timeout=5)
+    print('RAG API: Running' if r.status_code == 200 else f'RAG API: Error {r.status_code}')
+except:
+    print('RAG API: Not running (start with: cd langchain-llm-toolkit && make api)')
+"

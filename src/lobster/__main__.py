@@ -221,6 +221,8 @@ from lobster.commands.webhook_cmd import webhook  # noqa: E402
 from lobster.commands.watch_cmd import watch  # noqa: E402
 from lobster.commands.client_cmd import client  # noqa: E402
 from lobster.commands.notify_cmd import notify  # noqa: E402
+from lobster.commands.serena_cmd import serena  # noqa: E402
+from lobster.commands.rag_cmd import rag  # noqa: E402
 
 # 注册核心命令
 cli.add_command(config_cmd, name="config")
@@ -250,6 +252,8 @@ cli.add_command(webhook)
 cli.add_command(watch)
 cli.add_command(client)
 cli.add_command(notify, name="notify")
+cli.add_command(serena)
+cli.add_command(rag)
 
 
 def main():
