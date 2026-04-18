@@ -29,6 +29,7 @@ from lobster.core.errors import (
 from lobster.core.stats import stats_tracker
 from lobster.core.cache import tool_cache
 from lobster.core.investment import register_investment_tools
+from lobster.core.serena_client import register_serena_tools
 
 
 def measure_performance(func):
@@ -504,6 +505,9 @@ class ToolRegistry:
 
         # ==================== 投资工具 ====================
         register_investment_tools(self)
+
+        # ==================== Serena 工具 ====================
+        register_serena_tools(self)
 
     def register(self, tool: Tool):
         """注册工具"""

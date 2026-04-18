@@ -19,10 +19,16 @@
 git clone <repository-url>
 cd lobster
 
-# 安装依赖
+# 安装基础依赖
 make install
 # 或
 uv pip install -e ".[dev]"
+
+# 安装可选功能
+pip install -e ".[api]"      # API 服务器
+pip install -e ".[serena]"   # Serena 代码分析
+pip install -e ".[investment]"  # 投资工具
+pip install -e ".[all]"      # 安装所有功能
 ```
 
 ### 基本使用

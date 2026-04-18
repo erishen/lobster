@@ -21,6 +21,12 @@ from lobster.core.cache import ToolCache, tool_cache, get_tool_cache, cached_too
 from lobster.core.tools import ToolRegistry, Tool, registry
 from lobster.core.config import LobsterConfig, config, get_config
 from lobster.core.investment import InvestmentTools, investment_tools, register_investment_tools
+from lobster.core.serena_client import (
+    SerenaClient,
+    serena_client,
+    get_serena_client,
+    register_serena_tools,
+)
 
 __all__ = [
     "ErrorCode",
@@ -46,4 +52,8 @@ __all__ = [
     "InvestmentTools",
     "investment_tools",
     "register_investment_tools",
+    "SerenaClient",
+    "serena_client",
+    "get_serena_client",
+    "register_serena_tools",
 ]
