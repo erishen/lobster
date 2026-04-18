@@ -49,7 +49,7 @@ http = [
     "requests>=2.31.0",
 ]
 serena = [
-    "serena-ai>=1.0.0",
+    "serena-agent>=1.1.0",
 ]
 investment = [
     "tushare>=1.3.0",
