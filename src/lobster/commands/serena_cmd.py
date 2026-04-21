@@ -39,7 +39,9 @@ def init(project_path):
     if project_path is None:
         project_path = os.getcwd()
 
-    console.print(Panel(f"🔧 [bold cyan]初始化 Serena: {project_path}[/bold cyan]", border_style="blue"))
+    console.print(
+        Panel(f"🔧 [bold cyan]初始化 Serena: {project_path}[/bold cyan]", border_style="blue")
+    )
 
     result = client.initialize(project_path)
 
@@ -95,6 +97,7 @@ def symbols(file_path, depth):
     if not client.is_initialized():
         console.print("[yellow]正在初始化...[/]")
         import os
+
         client.initialize(os.getcwd())
 
     console.print(Panel(f"📋 [bold cyan]符号概览: {file_path}[/bold cyan]", border_style="blue"))
@@ -132,15 +135,12 @@ def find(symbol_name, file_path, body):
     if not client.is_initialized():
         console.print("[yellow]正在初始化...[/]")
         import os
+
         client.initialize(os.getcwd())
 
     console.print(Panel(f"🔍 [bold cyan]查找符号: {symbol_name}[/bold cyan]", border_style="blue"))
 
-    result = client.find_symbol(
-        symbol_name,
-        relative_path=file_path,
-        include_body=body
-    )
+    result = client.find_symbol(symbol_name, relative_path=file_path, include_body=body)
 
     if isinstance(result, list):
         for i, s in enumerate(result[:5], 1):
@@ -179,6 +179,7 @@ def search(pattern, glob_pattern, context):
     if not client.is_initialized():
         console.print("[yellow]正在初始化...[/]")
         import os
+
         client.initialize(os.getcwd())
 
     console.print(Panel(f"🔎 [bold cyan]搜索: {pattern}[/bold cyan]", border_style="blue"))
@@ -218,6 +219,7 @@ def find_file(file_mask, relative_path):
     if not client.is_initialized():
         console.print("[yellow]正在初始化...[/]")
         import os
+
         client.initialize(os.getcwd())
 
     console.print(Panel(f"📁 [bold cyan]查找文件: {file_mask}[/bold cyan]", border_style="blue"))
@@ -255,6 +257,7 @@ def refs(symbol_name, file_path):
     if not client.is_initialized():
         console.print("[yellow]正在初始化...[/]")
         import os
+
         client.initialize(os.getcwd())
 
     console.print(Panel(f"🔗 [bold cyan]查找引用: {symbol_name}[/bold cyan]", border_style="blue"))

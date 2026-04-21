@@ -104,11 +104,4 @@ serena-find:
 # RAG Knowledge Base
 rag-status:
 	@echo "Checking RAG knowledge base status..."
-	@PYTHONPATH=src python -c "
-import requests
-try:
-    r = requests.get('http://localhost:8000/health', timeout=5)
-    print('RAG API: Running' if r.status_code == 200 else f'RAG API: Error {r.status_code}')
-except:
-    print('RAG API: Not running (start with: cd langchain-llm-toolkit && make api)')
-"
+	@PYTHONPATH=src python -c "import requests; r = requests.get('http://localhost:8000/health', timeout=5) if True else None; print('RAG API: Running' if r and r.status_code == 200 else 'RAG API: Not running (start with: cd langchain-llm-toolkit && make api)')" 2>/dev/null || echo "RAG API: Not running (start with: cd langchain-llm-toolkit && make api)"
