@@ -57,7 +57,9 @@ def signals(top: int, min_confidence: float):
             pred_text = "📈 看涨" if prediction == "up" else "📉 看跌"
 
             strength = s.get("signal_strength", "weak")
-            strength_style = "green" if strength == "strong" else "yellow" if strength == "medium" else "dim"
+            strength_style = (
+                "green" if strength == "strong" else "yellow" if strength == "medium" else "dim"
+            )
 
             table.add_row(
                 s.get("code", ""),
@@ -69,7 +71,9 @@ def signals(top: int, min_confidence: float):
             )
 
         console.print(table)
-        console.print(f"\n[dim]共 {len(filtered)} 个信号 | 模型状态: {data.get('model_status', 'unknown')}[/]")
+        console.print(
+            f"\n[dim]共 {len(filtered)} 个信号 | 模型状态: {data.get('model_status', 'unknown')}[/]"
+        )
 
     except ImportError:
         console.print("[red]Error:[/] requests 未安装")

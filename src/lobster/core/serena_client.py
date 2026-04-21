@@ -36,7 +36,6 @@ try:
         RenameSymbolTool,
         ReplaceSymbolBodyTool,
         SearchForPatternTool,
-        Tool,
     )
 
     _serena_available = True
@@ -488,7 +487,12 @@ def register_serena_tools(registry: "ToolRegistry"):
                 "required": ["substring_pattern"],
             },
             handler=lambda substring_pattern, relative_path=None, paths_include_glob=None, paths_exclude_glob=None, context_lines_before=0, context_lines_after=0: client.search_for_pattern(
-                substring_pattern, relative_path, paths_include_glob, paths_exclude_glob, context_lines_before, context_lines_after
+                substring_pattern,
+                relative_path,
+                paths_include_glob,
+                paths_exclude_glob,
+                context_lines_before,
+                context_lines_after,
             ),
             category="serena",
         )
@@ -513,9 +517,7 @@ def register_serena_tools(registry: "ToolRegistry"):
                 },
                 "required": ["file_mask"],
             },
-            handler=lambda file_mask, relative_path=".": client.find_file(
-                file_mask, relative_path
-            ),
+            handler=lambda file_mask, relative_path=".": client.find_file(file_mask, relative_path),
             category="serena",
         )
     )

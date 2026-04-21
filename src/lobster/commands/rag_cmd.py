@@ -46,8 +46,8 @@ def status():
 
     except requests.exceptions.ConnectionError:
         console.print("[red]✗ 无法连接到知识库服务[/]")
-        console.print(f"[yellow]请确保 langchain-llm-toolkit API 正在运行:[/]")
-        console.print(f"  cd langchain-llm-toolkit && make api")
+        console.print("[yellow]请确保 langchain-llm-toolkit API 正在运行:[/]")
+        console.print("  cd langchain-llm-toolkit && make api")
     except ImportError:
         console.print("[red]Error: requests 库未安装[/]")
         console.print("[yellow]Install with:[/] pip install requests")
@@ -64,7 +64,7 @@ def ask(query, top_k, model):
         lobster rag ask "项目的主要功能是什么？"
         lobster rag ask "如何配置 API？" -k 5
     """
-    console.print(Panel(f"❓ [bold cyan]知识库查询[/bold cyan]", border_style="blue"))
+    console.print(Panel("❓ [bold cyan]知识库查询[/bold cyan]", border_style="blue"))
     console.print(f"问题: {query}\n")
 
     try:
@@ -88,7 +88,7 @@ def ask(query, top_k, model):
         if response.status_code == 200:
             result = response.json()
 
-            console.print(f"\n[bold green]回答:[/]")
+            console.print("\n[bold green]回答:[/]")
             console.print(f"{result.get('answer', '无回答')}\n")
 
             sources = result.get("sources", [])
@@ -124,7 +124,7 @@ def upload(file_path):
         lobster rag upload report.pdf
         lobster rag upload notes.txt
     """
-    console.print(Panel(f"📤 [bold cyan]上传文档[/bold cyan]", border_style="blue"))
+    console.print(Panel("📤 [bold cyan]上传文档[/bold cyan]", border_style="blue"))
     console.print(f"文件: {file_path}\n")
 
     try:
@@ -150,7 +150,7 @@ def upload(file_path):
 
         if response.status_code == 200:
             result = response.json()
-            console.print(f"[green]✓ 上传成功[/]")
+            console.print("[green]✓ 上传成功[/]")
             console.print(f"  文件: {result.get('filename', filename)}")
             console.print(f"  文档数: {result.get('documents_count', 'unknown')}")
         else:
@@ -213,7 +213,7 @@ def models():
                 table.add_row(
                     m.get("name", "unknown"),
                     m.get("type", "unknown"),
-                    m.get("description", "")[:50]
+                    m.get("description", "")[:50],
                 )
 
             console.print(table)
@@ -258,7 +258,7 @@ def generate(prompt, model):
 
         if response.status_code == 200:
             result = response.json()
-            console.print(f"\n[bold green]回答:[/]")
+            console.print("\n[bold green]回答:[/]")
             console.print(result.get("response", "无回答"))
             console.print(f"\n[dim]模型: {result.get('model', model)}[/]")
             console.print(f"[dim]耗时: {result.get('elapsed_time', 0):.2f}s[/]")
