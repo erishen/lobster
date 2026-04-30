@@ -1,6 +1,5 @@
 """测试工具缓存模块"""
 
-import pytest
 import time
 
 from lobster.core.cache import (
@@ -261,7 +260,7 @@ class TestCachedToolDecorator:
         tool_cache.clear()
 
         result1 = my_tool(True)
-        result2 = my_tool(True)
+        _ = my_tool(True)
 
         assert "error" in result1
         assert call_count == 2

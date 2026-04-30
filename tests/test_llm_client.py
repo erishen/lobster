@@ -1,7 +1,7 @@
 """测试 LLM 客户端功能"""
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from lobster.core.llm_client import (
     ConversationManager,
     ResponseCache,
@@ -141,7 +141,7 @@ class TestEnhancedLLMClient:
         assert client.enable_cache is False
         assert client.cache is None
 
-    @patch('lobster.core.llm_client.litellm.completion')
+    @patch("lobster.core.llm_client.litellm.completion")
     def test_generate(self, mock_completion):
         """测试生成文本"""
         # Mock 响应
@@ -156,7 +156,7 @@ class TestEnhancedLLMClient:
         assert result == "测试回答"
         mock_completion.assert_called_once()
 
-    @patch('lobster.core.llm_client.litellm.completion')
+    @patch("lobster.core.llm_client.litellm.completion")
     def test_generate_with_system_prompt(self, mock_completion):
         """测试带系统提示的生成"""
         mock_response = MagicMock()
@@ -169,7 +169,7 @@ class TestEnhancedLLMClient:
 
         assert result == "回答"
 
-    @patch('lobster.core.llm_client.litellm.completion')
+    @patch("lobster.core.llm_client.litellm.completion")
     def test_chat(self, mock_completion):
         """测试多轮对话"""
         mock_response = MagicMock()
@@ -189,7 +189,7 @@ class TestEnhancedLLMClient:
         assert response2 == "回复"
         assert len(client.conversation.history) == 4
 
-    @patch('lobster.core.llm_client.litellm.completion')
+    @patch("lobster.core.llm_client.litellm.completion")
     def test_batch_generate(self, mock_completion):
         """测试批量生成"""
         mock_response = MagicMock()
@@ -230,25 +230,23 @@ class TestEnhancedLLMClient:
 class TestGetLLMClient:
     """测试获取 LLM 客户端"""
 
-    @patch('lobster.core.config.ConfigManager')
+    @patch("lobster.core.config.ConfigManager")
     def test_get_llm_client_default(self, mock_config):
         """测试获取默认客户端"""
         mock_config_instance = MagicMock()
         mock_config_instance.get.return_value = "ollama/gemma3"
         mock_config.return_value = mock_config_instance
 
-        from lobster.core.llm_client import get_llm_client
         client = get_llm_client()
 
         assert client.model == "ollama/gemma3"
 
-    @patch('lobster.core.config.ConfigManager')
+    @patch("lobster.core.config.ConfigManager")
     def test_get_llm_client_custom_model(self, mock_config):
         """测试获取自定义模型客户端"""
         mock_config_instance = MagicMock()
         mock_config.return_value = mock_config_instance
 
-        from lobster.core.llm_client import get_llm_client
         client = get_llm_client(model="ollama/llama3")
 
         assert client.model == "ollama/llama3"

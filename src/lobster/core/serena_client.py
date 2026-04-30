@@ -418,8 +418,8 @@ def register_serena_tools(registry: "ToolRegistry"):
                 },
                 "required": ["name_path_pattern"],
             },
-            handler=lambda name_path_pattern, relative_path=None, depth=0, include_body=False: client.find_symbol(
-                name_path_pattern, relative_path, depth, include_body
+            handler=lambda name_path_pattern, relative_path=None, depth=0, include_body=False: (
+                client.find_symbol(name_path_pattern, relative_path, depth, include_body)
             ),
             category="serena",
         )
@@ -486,13 +486,15 @@ def register_serena_tools(registry: "ToolRegistry"):
                 },
                 "required": ["substring_pattern"],
             },
-            handler=lambda substring_pattern, relative_path=None, paths_include_glob=None, paths_exclude_glob=None, context_lines_before=0, context_lines_after=0: client.search_for_pattern(
-                substring_pattern,
-                relative_path,
-                paths_include_glob,
-                paths_exclude_glob,
-                context_lines_before,
-                context_lines_after,
+            handler=lambda substring_pattern, relative_path=None, paths_include_glob=None, paths_exclude_glob=None, context_lines_before=0, context_lines_after=0: (
+                client.search_for_pattern(
+                    substring_pattern,
+                    relative_path,
+                    paths_include_glob,
+                    paths_exclude_glob,
+                    context_lines_before,
+                    context_lines_after,
+                )
             ),
             category="serena",
         )

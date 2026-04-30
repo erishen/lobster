@@ -1,9 +1,7 @@
 """测试 Webhook 命令"""
 
 import pytest
-from pathlib import Path
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
 from lobster.commands.webhook_cmd import webhook
 
 

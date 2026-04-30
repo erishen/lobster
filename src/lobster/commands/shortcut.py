@@ -55,7 +55,9 @@ def query(query_text, k, model):
     config = ConfigManager()
     model = model or config.get("default_model", "ollama/gemma3")
 
-    console.print(Panel(f"🔍 [bold cyan]{query_text}[/bold cyan]", title="查询", border_style="blue"))
+    console.print(
+        Panel(f"🔍 [bold cyan]{query_text}[/bold cyan]", title="查询", border_style="blue")
+    )
 
     # 使用简单的记忆搜索
     memory = EnhancedMemoryManager()
@@ -107,7 +109,9 @@ def recall(search_text):
         lobster recall "OpenClaw"
         lobster recall "配置"
     """
-    console.print(Panel(f"🧠 [bold cyan]{search_text}[/bold cyan]", title="回忆", border_style="blue"))
+    console.print(
+        Panel(f"🧠 [bold cyan]{search_text}[/bold cyan]", title="回忆", border_style="blue")
+    )
 
     # 使用简单的记忆搜索
     memory = EnhancedMemoryManager()

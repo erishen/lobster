@@ -1,6 +1,5 @@
 """测试错误处理模块"""
 
-import pytest
 from lobster.core.errors import (
     ErrorCode,
     LobsterError,

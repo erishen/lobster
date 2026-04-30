@@ -1,10 +1,5 @@
 """Tests for configuration management"""
 
-import pytest
-from pathlib import Path
-import tempfile
-import json
-
 
 def test_config_creation():
     """Test creating a configuration"""
@@ -34,7 +29,7 @@ def test_config_custom_values():
 
 def test_config_manager():
     """Test configuration manager"""
-    from lobster.core.config import ConfigManager, LobsterConfig
+    from lobster.core.config import ConfigManager
 
     manager = ConfigManager()
 

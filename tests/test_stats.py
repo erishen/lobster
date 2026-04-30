@@ -1,11 +1,5 @@
 """测试工具统计模块"""
 
-import pytest
-import tempfile
-import json
-from pathlib import Path
-from unittest.mock import patch
-
 from lobster.core.stats import (
     ToolStats,
     ToolStatsTracker,

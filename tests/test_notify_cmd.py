@@ -2,7 +2,7 @@
 
 import pytest
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from lobster.commands.notify_cmd import notify
 
 
@@ -13,7 +13,7 @@ class TestNotifySend:
         """测试 macOS 通知"""
         runner = CliRunner()
 
-        with patch("lobster.commands.notify_cmd._send_macos") as mock_send:
+        with patch("lobster.commands.notify_cmd._send_macos"):
             result = runner.invoke(notify, ["send", "测试消息"])
 
             assert result.exit_code == 0
@@ -22,7 +22,7 @@ class TestNotifySend:
         """测试带标题的通知"""
         runner = CliRunner()
 
-        with patch("lobster.commands.notify_cmd._send_macos") as mock_send:
+        with patch("lobster.commands.notify_cmd._send_macos"):
             result = runner.invoke(notify, ["send", "测试消息", "--title", "测试标题"])
 
             assert result.exit_code == 0
@@ -35,7 +35,7 @@ class TestNotifyAlert:
         """测试发送警报"""
         runner = CliRunner()
 
-        with patch("lobster.commands.notify_cmd._send_macos") as mock_send:
+        with patch("lobster.commands.notify_cmd._send_macos"):
             result = runner.invoke(notify, ["alert", "警报消息"])
 
             assert result.exit_code == 0

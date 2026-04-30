@@ -116,7 +116,10 @@ def convert(file_path, output_format, output):
         lobster data convert data.json csv -o output.csv
     """
     console.print(
-        Panel(f"🔄 [bold cyan]格式转换: {file_path} -> {output_format}[/bold cyan]", border_style="blue")
+        Panel(
+            f"🔄 [bold cyan]格式转换: {file_path} -> {output_format}[/bold cyan]",
+            border_style="blue",
+        )
     )
 
     # 读取文件

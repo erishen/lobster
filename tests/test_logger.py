@@ -1,8 +1,6 @@
 """测试日志模块"""
 
-import pytest
-import logging
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from lobster.core.logger import LobsterLogger, logger, get_logger
 
