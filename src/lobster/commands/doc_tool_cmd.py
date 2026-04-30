@@ -45,7 +45,7 @@ def summarize(file_path, model, length):
         "long": "详细总结，包括主要观点和细节",
     }
 
-    prompt = f"""请{length_prompts.get(length, '总结')}以下文档：
+    prompt = f"""请{length_prompts.get(length, "总结")}以下文档：
 
 {content[:5000]}
 
@@ -73,7 +73,8 @@ def translate(file_path, target_language, model):
 
     console.print(
         Panel(
-            f"🌐 [bold cyan]文档翻译: {file_path} -> {target_language}[/bold cyan]", border_style="blue"
+            f"🌐 [bold cyan]文档翻译: {file_path} -> {target_language}[/bold cyan]",
+            border_style="blue",
         )
     )
 

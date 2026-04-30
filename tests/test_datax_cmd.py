@@ -62,7 +62,9 @@ class TestDataxImport:
             backup_file = Path("backup.json")
             backup_data = {
                 "version": "1.0",
-                "memories": [{"content": "test memory", "metadata": {"tags": [], "category": "general"}}],
+                "memories": [
+                    {"content": "test memory", "metadata": {"tags": [], "category": "general"}}
+                ],
             }
             backup_file.write_text(json.dumps(backup_data))
 
@@ -95,7 +97,9 @@ class TestDataxRestore:
             backup_file = Path("backup.json")
             backup_data = {
                 "version": "1.0",
-                "memories": [{"content": "test memory", "metadata": {"tags": [], "category": "general"}}],
+                "memories": [
+                    {"content": "test memory", "metadata": {"tags": [], "category": "general"}}
+                ],
             }
             backup_file.write_text(json.dumps(backup_data))
 

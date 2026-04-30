@@ -137,7 +137,7 @@ def refactor(file_path, model, focus):
         "security": "安全性",
     }
 
-    prompt = f"""请为以下代码提供重构建议，重点关注{focus_prompts.get(focus, '所有方面')}：
+    prompt = f"""请为以下代码提供重构建议，重点关注{focus_prompts.get(focus, "所有方面")}：
 
 ```
 {code_content}
@@ -215,7 +215,8 @@ def translate(file_path, target_language, model):
 
     console.print(
         Panel(
-            f"🌐 [bold cyan]代码翻译: {file_path} -> {target_language}[/bold cyan]", border_style="blue"
+            f"🌐 [bold cyan]代码翻译: {file_path} -> {target_language}[/bold cyan]",
+            border_style="blue",
         )
     )
 

@@ -650,7 +650,9 @@ class ToolRegistry:
                 "truncated": truncated,
             }
         except UnicodeDecodeError as e:
-            return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {str(e)}").message}
+            return {
+                "error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {str(e)}").message
+            }
         except Exception as e:
             return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, str(e)).message}
 
@@ -801,7 +803,9 @@ class ToolRegistry:
                 "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {"error": LobsterError(ErrorCode.CODE_TIMEOUT, f"执行超时 ({timeout}秒)").message}
+            return {
+                "error": LobsterError(ErrorCode.CODE_TIMEOUT, f"执行超时 ({timeout}秒)").message
+            }
         except Exception as e:
             return {"error": LobsterError(ErrorCode.CODE_ERROR, str(e)).message}
 
@@ -822,7 +826,9 @@ class ToolRegistry:
                 "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {"error": LobsterError(ErrorCode.COMMAND_TIMEOUT, f"执行超时 ({timeout}秒)").message}
+            return {
+                "error": LobsterError(ErrorCode.COMMAND_TIMEOUT, f"执行超时 ({timeout}秒)").message
+            }
         except Exception as e:
             return {"error": LobsterError(ErrorCode.COMMAND_FAILED, str(e)).message}
 
@@ -888,10 +894,14 @@ class ToolRegistry:
             return {"data": parsed}
         except json.JSONDecodeError as e:
             return {
-                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {str(e)}").message
+                "error": LobsterError(
+                    ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {str(e)}"
+                ).message
             }
         except (KeyError, IndexError) as e:
-            return {"error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {str(e)}").message}
+            return {
+                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {str(e)}").message
+            }
 
     def _handle_text_process(self, text: str, operation: str) -> Dict[str, Any]:
         """文本处理"""
@@ -910,7 +920,9 @@ class ToolRegistry:
 
         if operation not in operations:
             return {
-                "error": LobsterError(ErrorCode.TEXT_PROCESS_ERROR, f"未知操作: {operation}").message
+                "error": LobsterError(
+                    ErrorCode.TEXT_PROCESS_ERROR, f"未知操作: {operation}"
+                ).message
             }
 
         return {"result": operations[operation]}

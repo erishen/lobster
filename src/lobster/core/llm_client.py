@@ -214,7 +214,9 @@ class EnhancedLLMClient:
                 if attempt == self.max_retries - 1:
                     console.print(f"[red]LLM 调用失败（重试 {self.max_retries} 次后）: {str(e)}[/]")
                     return f"错误: {str(e)}"
-                console.print(f"[yellow]LLM 调用失败，重试中... ({attempt + 1}/{self.max_retries})[/]")
+                console.print(
+                    f"[yellow]LLM 调用失败，重试中... ({attempt + 1}/{self.max_retries})[/]"
+                )
 
     def generate_stream(
         self,

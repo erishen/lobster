@@ -228,7 +228,9 @@ def report(path, model):
 
     # 收集项目信息
     readme_file = project_path / "README.md"
-    readme_content = readme_file.read_text(encoding="utf-8") if readme_file.exists() else "无 README"
+    readme_content = (
+        readme_file.read_text(encoding="utf-8") if readme_file.exists() else "无 README"
+    )
 
     code_lines = 0
     for file_path in project_path.rglob("*"):

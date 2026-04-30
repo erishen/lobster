@@ -1,7 +1,6 @@
 """Test configuration for Lobster CLI"""
 
 import sys
-import os
 from pathlib import Path
 
 # 添加 src 目录到 Python 路径

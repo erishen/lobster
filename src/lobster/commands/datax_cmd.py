@@ -39,7 +39,9 @@ def export(memories, history, config, all, output):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_path = Path(f"lobster_backup_{timestamp}.json")
 
-    console.print(Panel(f"📤 [bold cyan]导出数据到: {output_path}[/bold cyan]", border_style="blue"))
+    console.print(
+        Panel(f"📤 [bold cyan]导出数据到: {output_path}[/bold cyan]", border_style="blue")
+    )
 
     export_data = {
         "version": "1.0",
