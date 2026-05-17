@@ -1,14 +1,15 @@
 """实用工具命令模块"""
 
+import hashlib
+import shutil
+import zipfile
+from datetime import datetime
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from pathlib import Path
-from datetime import datetime
-import shutil
-import zipfile
-import hashlib
 
 console = Console()
 
@@ -168,7 +169,7 @@ def head(file_path, lines):
     """
     console.print(Panel(f"📄 [bold cyan]文件头部: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         for i, line in enumerate(f, 1):
             if i > lines:
                 break
@@ -189,7 +190,7 @@ def tail(file_path, lines):
     """
     console.print(Panel(f"📄 [bold cyan]文件尾部: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         all_lines = f.readlines()
 
     for i, line in enumerate(all_lines[-lines:], len(all_lines) - lines + 1):

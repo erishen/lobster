@@ -1,11 +1,12 @@
 """System diagnostics commands"""
 
+import platform
+import subprocess
+import sys
+
 import click
 from rich.console import Console
 from rich.table import Table
-import sys
-import platform
-import subprocess
 
 console = Console()
 
@@ -78,7 +79,7 @@ def check_dependencies():
         ("litellm", "LiteLLM", "LLM integration"),
     ]
 
-    for module, name, desc in dependencies:
+    for module, name, _desc in dependencies:
         try:
             mod = __import__(module)
             version = getattr(mod, "__version__", "installed")
@@ -189,7 +190,7 @@ def deps():
             console.print("[red]Error:[/] Failed to list packages")
 
     except Exception as e:
-        console.print(f"[red]Error:[/] {str(e)}")
+        console.print(f"[red]Error:[/] {e!s}")
 
 
 @doctor.command()
@@ -251,7 +252,7 @@ def logs():
         console.print(f"\n[bold cyan]Log: {log_file}[/]")
 
         try:
-            with open(log_file, "r", encoding="utf-8") as f:
+            with open(log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
                 # Show last 20 lines
@@ -259,4 +260,4 @@ def logs():
                     console.print(line.rstrip())
 
         except Exception as e:
-            console.print(f"[red]Error reading log:[/] {str(e)}")
+            console.print(f"[red]Error reading log:[/] {e!s}")

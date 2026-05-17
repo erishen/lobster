@@ -39,9 +39,10 @@ def status():
 @click.option("--with-memory", is_flag=True, help="Enable memory-enhanced chat")
 def chat(message, model, interactive, with_memory):
     """Send a message to the OpenClaw assistant"""
+    from rich.prompt import Prompt
+
     from lobster.core.llm_client import get_llm_client
     from lobster.core.memory_store import EnhancedMemoryManager
-    from rich.prompt import Prompt
 
     llm = get_llm_client(model)
 
@@ -65,8 +66,9 @@ def chat(message, model, interactive, with_memory):
 
                 if user_input.lower() in ["quit", "exit"]:
                     if conversation_messages:
-                        from lobster.commands.history import save_conversation
                         from datetime import datetime
+
+                        from lobster.commands.history import save_conversation
 
                         conversation_data = {
                             "timestamp": datetime.now().isoformat(),
@@ -115,8 +117,9 @@ def chat(message, model, interactive, with_memory):
 
             except KeyboardInterrupt:
                 if conversation_messages:
-                    from lobster.commands.history import save_conversation
                     from datetime import datetime
+
+                    from lobster.commands.history import save_conversation
 
                     conversation_data = {
                         "timestamp": datetime.now().isoformat(),
@@ -128,7 +131,7 @@ def chat(message, model, interactive, with_memory):
                 console.print("\n[yellow]Goodbye! 👋[/]")
                 break
             except Exception as e:
-                console.print(f"[red]Error:[/] {str(e)}")
+                console.print(f"[red]Error:[/] {e!s}")
                 continue
 
     else:
@@ -188,42 +191,44 @@ def web(port, host):
     except KeyboardInterrupt:
         console.print("\n[yellow]Web UI stopped[/]")
     except Exception as e:
-        console.print(f"[red]Error starting Web UI:[/] {str(e)}")
+        console.print(f"[red]Error starting Web UI:[/] {e!s}")
 
 
 # 导入核心命令
-from lobster.commands.config_cmd import config_cmd  # noqa: E402
-from lobster.commands.model import model  # noqa: E402
-from lobster.commands.template import template  # noqa: E402
-from lobster.commands.doctor import doctor  # noqa: E402
-from lobster.commands.memory import memory  # noqa: E402
-from lobster.commands.history import history  # noqa: E402
+from lobster.commands.api_cmd import api
+from lobster.commands.client_cmd import client
+from lobster.commands.code_cmd import code
+from lobster.commands.config_cmd import config_cmd
+from lobster.commands.data_cmd import data
+from lobster.commands.datax_cmd import datax
+from lobster.commands.doc_tool_cmd import doc_tool
+from lobster.commands.doctor import doctor
+from lobster.commands.history import history
+from lobster.commands.invest_cmd import invest
+from lobster.commands.memory import memory
+from lobster.commands.model import model
+from lobster.commands.notify_cmd import notify
+from lobster.commands.openclaw_cmd import openclaw
+from lobster.commands.project_cmd import project
+from lobster.commands.rag_cmd import rag
+from lobster.commands.scheduler_cmd import scheduler
+from lobster.commands.search_cmd import search
+from lobster.commands.serena_cmd import serena
 
 # 导入新命令
-from lobster.commands.shortcut import (  # noqa: E402
+from lobster.commands.shortcut import (
     ask,
     query,
-    remember,
     recall,
+    remember,
+)
+from lobster.commands.shortcut import (
     status as shortcut_status,
 )
-from lobster.commands.openclaw_cmd import openclaw  # noqa: E402
-from lobster.commands.code_cmd import code  # noqa: E402
-from lobster.commands.doc_tool_cmd import doc_tool  # noqa: E402
-from lobster.commands.data_cmd import data  # noqa: E402
-from lobster.commands.project_cmd import project  # noqa: E402
-from lobster.commands.util_cmd import util as util_tools  # noqa: E402
-from lobster.commands.api_cmd import api  # noqa: E402
-from lobster.commands.search_cmd import search  # noqa: E402
-from lobster.commands.datax_cmd import datax  # noqa: E402
-from lobster.commands.scheduler_cmd import scheduler  # noqa: E402
-from lobster.commands.webhook_cmd import webhook  # noqa: E402
-from lobster.commands.watch_cmd import watch  # noqa: E402
-from lobster.commands.client_cmd import client  # noqa: E402
-from lobster.commands.notify_cmd import notify  # noqa: E402
-from lobster.commands.serena_cmd import serena  # noqa: E402
-from lobster.commands.rag_cmd import rag  # noqa: E402
-from lobster.commands.invest_cmd import invest  # noqa: E402
+from lobster.commands.template import template
+from lobster.commands.util_cmd import util as util_tools
+from lobster.commands.watch_cmd import watch
+from lobster.commands.webhook_cmd import webhook
 
 # 注册核心命令
 cli.add_command(config_cmd, name="config")

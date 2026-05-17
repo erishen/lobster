@@ -4,7 +4,7 @@
 """
 
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Any
 
 
 class ErrorCode(Enum):
@@ -47,7 +47,7 @@ class ErrorCode(Enum):
     AUTH_MISSING = 701
 
 
-ERROR_MESSAGES: Dict[ErrorCode, str] = {
+ERROR_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.SUCCESS: "操作成功",
     ErrorCode.UNKNOWN_ERROR: "未知错误",
     ErrorCode.FILE_NOT_FOUND: "文件不存在",
@@ -85,15 +85,15 @@ class LobsterError(Exception):
     def __init__(
         self,
         code: ErrorCode,
-        message: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        message: str | None = None,
+        details: dict[str, Any] | None = None,
     ):
         self.code = code
         self.message = message or ERROR_MESSAGES.get(code, "未知错误")
         self.details = details or {}
         super().__init__(self.message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "success": False,
@@ -111,9 +111,9 @@ class LobsterError(Exception):
 
 def error_response(
     code: ErrorCode,
-    message: Optional[str] = None,
-    details: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    message: str | None = None,
+    details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """生成错误响应"""
     error = LobsterError(code, message, details)
     return error.to_dict()
@@ -121,9 +121,9 @@ def error_response(
 
 def success_response(
     result: Any,
-    duration_ms: Optional[float] = None,
+    duration_ms: float | None = None,
     cached: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """生成成功响应"""
     response = {
         "success": True,

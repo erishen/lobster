@@ -4,9 +4,9 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 
+from lobster.core.config import ConfigManager
 from lobster.core.llm_client import get_llm_client
 from lobster.core.memory_store import EnhancedMemoryManager
-from lobster.core.config import ConfigManager
 
 console = Console()
 

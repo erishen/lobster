@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime
-from typing import Dict, List, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
+from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from lobster.core.tools import ToolRegistry
@@ -47,11 +47,11 @@ class InvestmentTools:
     """投资工具类"""
 
     def __init__(self):
-        self._cache: Dict[str, Any] = {}
-        self._cache_time: Dict[str, float] = {}
+        self._cache: dict[str, Any] = {}
+        self._cache_time: dict[str, float] = {}
         self._cache_ttl = 60
 
-    def _get_cached(self, key: str) -> Optional[Any]:
+    def _get_cached(self, key: str) -> Any | None:
         """获取缓存数据"""
         if key in self._cache and time.time() - self._cache_time.get(key, 0) < self._cache_ttl:
             return self._cache[key]
@@ -62,7 +62,7 @@ class InvestmentTools:
         self._cache[key] = value
         self._cache_time[key] = time.time()
 
-    def get_stock_quote(self, code: str) -> Dict[str, Any]:
+    def get_stock_quote(self, code: str) -> dict[str, Any]:
         """获取股票行情
 
         Args:
@@ -73,13 +73,11 @@ class InvestmentTools:
             return cached
 
         try:
-            import urllib.request
             import re
+            import urllib.request
 
             # 处理代码格式
-            if code.startswith("sh") or code.startswith("sz"):
-                full_code = code
-            elif code.startswith("hk"):
+            if code.startswith("sh") or code.startswith("sz") or code.startswith("hk"):
                 full_code = code
             elif code.startswith("6"):
                 full_code = f"sh{code}"
@@ -135,9 +133,9 @@ class InvestmentTools:
             return result
 
         except Exception as e:
-            return {"error": f"获取股票行情失败: {str(e)}"}
+            return {"error": f"获取股票行情失败: {e!s}"}
 
-    def get_fund_quote(self, code: str) -> Dict[str, Any]:
+    def get_fund_quote(self, code: str) -> dict[str, Any]:
         """获取基金净值
 
         Args:
@@ -180,9 +178,9 @@ class InvestmentTools:
             return result
 
         except Exception as e:
-            return {"error": f"获取基金净值失败: {str(e)}"}
+            return {"error": f"获取基金净值失败: {e!s}"}
 
-    def get_index_quote(self, code: str) -> Dict[str, Any]:
+    def get_index_quote(self, code: str) -> dict[str, Any]:
         """获取指数行情
 
         Args:
@@ -190,7 +188,7 @@ class InvestmentTools:
         """
         return self.get_stock_quote(code)
 
-    def get_stock_list(self, codes: List[str]) -> Dict[str, Any]:
+    def get_stock_list(self, codes: list[str]) -> dict[str, Any]:
         """批量获取股票行情
 
         Args:
@@ -208,7 +206,7 @@ class InvestmentTools:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-    def get_market_summary(self) -> Dict[str, Any]:
+    def get_market_summary(self) -> dict[str, Any]:
         """获取市场概况"""
         indices = [
             ("sh000001", "上证指数"),
@@ -239,15 +237,15 @@ class InvestmentTools:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-    def search_stock(self, keyword: str) -> Dict[str, Any]:
+    def search_stock(self, keyword: str) -> dict[str, Any]:
         """搜索股票
 
         Args:
             keyword: 股票名称或代码关键词
         """
         try:
-            import urllib.request
             import urllib.parse
+            import urllib.request
 
             encoded_keyword = urllib.parse.quote(keyword)
             url = f"https://suggest3.sinajs.cn/suggest/type=11,12,13,14,15&key={encoded_keyword}"
@@ -285,9 +283,9 @@ class InvestmentTools:
             }
 
         except Exception as e:
-            return {"error": f"搜索股票失败: {str(e)}"}
+            return {"error": f"搜索股票失败: {e!s}"}
 
-    def get_stock_kline(self, code: str, period: str = "daily") -> Dict[str, Any]:
+    def get_stock_kline(self, code: str, period: str = "daily") -> dict[str, Any]:
         """获取股票K线数据
 
         Args:
@@ -330,13 +328,13 @@ class InvestmentTools:
             return result
 
         except Exception as e:
-            return {"error": f"获取K线数据失败: {str(e)}"}
+            return {"error": f"获取K线数据失败: {e!s}"}
 
 
 investment_tools = InvestmentTools()
 
 
-def register_investment_tools(registry: "ToolRegistry"):
+def register_investment_tools(registry: ToolRegistry):
     """注册投资工具到注册表"""
     from lobster.core.tools import Tool
 
@@ -481,7 +479,7 @@ def register_investment_tools(registry: "ToolRegistry"):
 
         def get_tushare_daily(
             code: str, start_date: str = "", end_date: str = ""
-        ) -> Dict[str, Any]:
+        ) -> dict[str, Any]:
             """获取 Tushare 日线数据"""
             try:
                 import tushare as ts
@@ -503,9 +501,9 @@ def register_investment_tools(registry: "ToolRegistry"):
             except ImportError:
                 return {"error": "tushare 库未安装，请运行: pip install tushare"}
             except Exception as e:
-                return {"error": f"Tushare 查询失败: {str(e)}"}
+                return {"error": f"Tushare 查询失败: {e!s}"}
 
-        def get_tushare_basic() -> Dict[str, Any]:
+        def get_tushare_basic() -> dict[str, Any]:
             """获取股票列表"""
             try:
                 import tushare as ts
@@ -523,7 +521,7 @@ def register_investment_tools(registry: "ToolRegistry"):
             except ImportError:
                 return {"error": "tushare 库未安装，请运行: pip install tushare"}
             except Exception as e:
-                return {"error": f"Tushare 查询失败: {str(e)}"}
+                return {"error": f"Tushare 查询失败: {e!s}"}
 
         registry.register(
             Tool(
@@ -569,7 +567,7 @@ def register_investment_tools(registry: "ToolRegistry"):
     # Alpha Vantage 数据源 (需要 API Key)
     if config.has_alphavantage:
 
-        def get_alpha_quote(symbol: str) -> Dict[str, Any]:
+        def get_alpha_quote(symbol: str) -> dict[str, Any]:
             """获取 Alpha Vantage 股票行情"""
             try:
                 import urllib.request
@@ -593,9 +591,9 @@ def register_investment_tools(registry: "ToolRegistry"):
                 }
 
             except Exception as e:
-                return {"error": f"Alpha Vantage 查询失败: {str(e)}"}
+                return {"error": f"Alpha Vantage 查询失败: {e!s}"}
 
-        def get_alpha_forex(from_currency: str, to_currency: str = "CNY") -> Dict[str, Any]:
+        def get_alpha_forex(from_currency: str, to_currency: str = "CNY") -> dict[str, Any]:
             """获取汇率"""
             try:
                 import urllib.request
@@ -617,7 +615,7 @@ def register_investment_tools(registry: "ToolRegistry"):
                 }
 
             except Exception as e:
-                return {"error": f"Alpha Vantage 查询失败: {str(e)}"}
+                return {"error": f"Alpha Vantage 查询失败: {e!s}"}
 
         registry.register(
             Tool(

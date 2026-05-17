@@ -2,6 +2,7 @@
 
 import os
 import secrets
+
 import click
 from rich.console import Console
 from rich.panel import Panel
@@ -54,10 +55,10 @@ def serve(host, port, reload, api_key, no_auth):
     console.print(Panel("🚀 [bold cyan]启动 API 服务器[/bold cyan]", border_style="blue"))
 
     try:
-        from fastapi import FastAPI, HTTPException, Depends, Security
+        import uvicorn
+        from fastapi import Depends, FastAPI, HTTPException, Security
         from fastapi.middleware.cors import CORSMiddleware
         from fastapi.security import APIKeyHeader
-        import uvicorn
 
         app = FastAPI(
             title="Lobster API",
@@ -74,10 +75,7 @@ def serve(host, port, reload, api_key, no_auth):
         )
 
         if not no_auth:
-            if api_key:
-                current_api_key = api_key
-            else:
-                current_api_key = get_or_create_api_key()
+            current_api_key = api_key or get_or_create_api_key()
 
             api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 

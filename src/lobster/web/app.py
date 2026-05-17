@@ -1,10 +1,11 @@
 """Lobster Web UI - Streamlit Application"""
 
-import streamlit as st
-from datetime import datetime
-from pathlib import Path
 import json
 import sys
+from datetime import datetime
+from pathlib import Path
+
+import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -58,7 +59,7 @@ def chat_page():
     """Chat interface page"""
     st.header("💬 Chat with OpenClaw")
 
-    col1, col2 = st.columns([3, 1])
+    _col1, col2 = st.columns([3, 1])
     with col2:
         st.session_state.model = st.selectbox(
             "Model", get_available_models(), index=0, key="model_select"
@@ -123,7 +124,7 @@ def chat_page():
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
             except Exception as e:
-                message_placeholder.markdown(f"❌ Error: {str(e)}")
+                message_placeholder.markdown(f"❌ Error: {e!s}")
 
 
 def memory_page():
@@ -144,8 +145,8 @@ def memory_page():
         if st.button("Add Memory", key="add_memory_btn"):
             if content:
                 try:
-                    from langchain_llm_toolkit import RAGSystem
                     from langchain_core.documents import Document
+                    from langchain_llm_toolkit import RAGSystem
 
                     MEMORY_STORE_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -180,7 +181,7 @@ def memory_page():
 
                     memory_index_file = Path.cwd() / ".lobster_memory_index.json"
                     if memory_index_file.exists():
-                        with open(memory_index_file, "r") as f:
+                        with open(memory_index_file) as f:
                             index_data = json.load(f)
                     else:
                         index_data = {"memories": []}
@@ -202,7 +203,7 @@ def memory_page():
                     st.rerun()
 
                 except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
+                    st.error(f"❌ Error: {e!s}")
             else:
                 st.warning("Please enter memory content")
 
@@ -211,7 +212,7 @@ def memory_page():
         try:
             memory_index_file = Path.cwd() / ".lobster_memory_index.json"
             if memory_index_file.exists():
-                with open(memory_index_file, "r") as f:
+                with open(memory_index_file) as f:
                     index_data = json.load(f)
 
                 memories = index_data.get("memories", [])
@@ -230,7 +231,7 @@ def memory_page():
             else:
                 st.info("No memories found")
         except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
+            st.error(f"❌ Error: {e!s}")
 
     with tab3:
         st.subheader("Search Memories")
@@ -272,7 +273,7 @@ def memory_page():
                     else:
                         st.info("No memories stored yet")
                 except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
+                    st.error(f"❌ Error: {e!s}")
             else:
                 st.warning("Please enter a search query")
 
@@ -289,7 +290,7 @@ def history_page():
         conversations = []
         for file in HISTORY_DIR.glob("conversation_*.json"):
             try:
-                with open(file, "r", encoding="utf-8") as f:
+                with open(file, encoding="utf-8") as f:
                     data = json.load(f)
                 conversations.append(
                     {
@@ -328,7 +329,7 @@ def history_page():
             st.info("No conversation history found")
 
     except Exception as e:
-        st.error(f"❌ Error: {str(e)}")
+        st.error(f"❌ Error: {e!s}")
 
 
 def main():

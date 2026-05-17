@@ -1,12 +1,13 @@
 """定时任务命令模块"""
 
+import json
+from datetime import datetime
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from pathlib import Path
-import json
-from datetime import datetime
 
 console = Console()
 
@@ -164,7 +165,7 @@ def run():
 def _load_tasks() -> dict:
     """加载任务列表"""
     if SCHEDULER_FILE.exists():
-        with open(SCHEDULER_FILE, "r", encoding="utf-8") as f:
+        with open(SCHEDULER_FILE, encoding="utf-8") as f:
             return json.load(f)
     return {}
 
@@ -200,7 +201,7 @@ def _run_task(task: dict):
             console.print(f"❌ 任务失败: {result.stderr}")
 
     except Exception as e:
-        console.print(f"❌ 执行错误: {str(e)}")
+        console.print(f"❌ 执行错误: {e!s}")
 
 
 if __name__ == "__main__":

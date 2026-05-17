@@ -1,10 +1,12 @@
 """测试项目管理命令"""
 
-import pytest
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
+
 from lobster.commands.project_cmd import project
 
 

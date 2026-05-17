@@ -1,10 +1,10 @@
 """Model management commands for Ollama models"""
 
 import click
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 import requests
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 
@@ -62,7 +62,7 @@ def list():
         console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
         console.print("[yellow]Start Ollama with:[/] ollama serve")
     except Exception as e:
-        console.print(f"[red]Error:[/] {str(e)}")
+        console.print(f"[red]Error:[/] {e!s}")
 
 
 @model.command()
@@ -87,7 +87,7 @@ def pull(model_name):
     except requests.exceptions.ConnectionError:
         console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error pulling model:[/] {str(e)}")
+        console.print(f"[red]Error pulling model:[/] {e!s}")
 
 
 @model.command()
@@ -111,7 +111,7 @@ def rm(model_name):
     except requests.exceptions.ConnectionError:
         console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error removing model:[/] {str(e)}")
+        console.print(f"[red]Error removing model:[/] {e!s}")
 
 
 @model.command()
@@ -146,7 +146,7 @@ def info(model_name):
     except requests.exceptions.ConnectionError:
         console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error getting model info:[/] {str(e)}")
+        console.print(f"[red]Error getting model info:[/] {e!s}")
 
 
 @model.command()
@@ -170,7 +170,7 @@ def copy(model_name):
     except requests.exceptions.ConnectionError:
         console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error copying model:[/] {str(e)}")
+        console.print(f"[red]Error copying model:[/] {e!s}")
 
 
 @model.command()
@@ -217,7 +217,7 @@ def ps():
     except requests.exceptions.ConnectionError:
         console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error:[/] {str(e)}")
+        console.print(f"[red]Error:[/] {e!s}")
 
 
 @model.command()

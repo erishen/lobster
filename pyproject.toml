@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "investkit-utils @ file:///${PROJECT_ROOT}/../investkit_utils",
+    "investkit-utils",
     "click>=8.1.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
@@ -94,4 +94,15 @@ disallow_untyped_defs = false
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "PERF", "RUF"]
+ignore = ["S101", "RUF001", "RUF002", "RUF003", "PERF203", "PERF401", "RUF012", "SIM117", "E501", "E402", "N806", "N803", "E741", "B008", "SIM115"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B", "RUF012"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

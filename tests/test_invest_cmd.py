@@ -12,7 +12,7 @@ from click.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from lobster.commands.invest_cmd import invest, signals, portfolio, risk, signal, market
+from lobster.commands.invest_cmd import invest, market, portfolio, risk, signal, signals
 
 
 class TestInvestGroup:

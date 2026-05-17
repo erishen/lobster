@@ -1,11 +1,12 @@
 """文件监控命令模块"""
 
+import json
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from pathlib import Path
-import json
 
 console = Console()
 
@@ -104,8 +105,9 @@ def start(watcher_id):
 
     try:
         import time
-        from watchdog.observers import Observer
+
         from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
 
         class WatchHandler(FileSystemEventHandler):
             def __init__(self, cmd, pattern):
@@ -151,7 +153,7 @@ def start(watcher_id):
                         console.print(f"❌ 失败: {result.stderr[:100]}")
 
                 except Exception as e:
-                    console.print(f"❌ 错误: {str(e)}")
+                    console.print(f"❌ 错误: {e!s}")
 
         handler = WatchHandler(watcher["command"], watcher["pattern"])
         observer = Observer()
@@ -190,7 +192,7 @@ def remove(watcher_id):
 def _load_watchers() -> dict:
     """加载监控列表"""
     if WATCHER_FILE.exists():
-        with open(WATCHER_FILE, "r", encoding="utf-8") as f:
+        with open(WATCHER_FILE, encoding="utf-8") as f:
             return json.load(f)
     return {}
 

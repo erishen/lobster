@@ -47,7 +47,7 @@ def _send_macos(message: str, title: str):
         subprocess.run(["osascript", "-e", script], check=True)
         console.print("✅ [green]通知已发送[/]")
     except Exception as e:
-        console.print(f"❌ [red]发送失败: {str(e)}[/]")
+        console.print(f"❌ [red]发送失败: {e!s}[/]")
 
 
 def _send_linux(message: str, title: str):
@@ -63,7 +63,7 @@ def _send_linux(message: str, title: str):
     except FileNotFoundError:
         console.print("[red]Error: notify-send 未安装 (sudo apt install libnotify-bin)[/]")
     except Exception as e:
-        console.print(f"❌ [red]发送失败: {str(e)}[/]")
+        console.print(f"❌ [red]发送失败: {e!s}[/]")
 
 
 def _send_windows(message: str, title: str):
@@ -77,7 +77,7 @@ def _send_windows(message: str, title: str):
     except ImportError:
         console.print("[red]Error: win10toast 未安装 (pip install win10toast)[/]")
     except Exception as e:
-        console.print(f"❌ [red]发送失败: {str(e)}[/]")
+        console.print(f"❌ [red]发送失败: {e!s}[/]")
 
 
 @notify.command()

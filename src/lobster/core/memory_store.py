@@ -1,13 +1,13 @@
 """优化的向量存储 - 支持相似度搜索和模糊匹配"""
 
-import json
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import hashlib
+import json
+import math
 import re
 from collections import Counter
-import math
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 
 class OptimizedVectorStore:
@@ -28,7 +28,7 @@ class OptimizedVectorStore:
     def _load_index(self):
         """加载索引"""
         if self.index_file.exists():
-            with open(self.index_file, "r", encoding="utf-8") as f:
+            with open(self.index_file, encoding="utf-8") as f:
                 self.index = json.load(f)
         else:
             self.index = []
@@ -38,7 +38,7 @@ class OptimizedVectorStore:
         with open(self.index_file, "w", encoding="utf-8") as f:
             json.dump(self.index, f, indent=2, ensure_ascii=False)
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """分词
 
         Args:
@@ -52,7 +52,7 @@ class OptimizedVectorStore:
         tokens = re.findall(r"\b\w+\b", text)
         return tokens
 
-    def _calculate_tfidf(self, query_tokens: List[str], doc_tokens: List[str]) -> float:
+    def _calculate_tfidf(self, query_tokens: list[str], doc_tokens: list[str]) -> float:
         """计算 TF-IDF 相似度
 
         Args:
@@ -142,7 +142,7 @@ class OptimizedVectorStore:
     def add(
         self,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """添加内容
 
@@ -178,7 +178,7 @@ class OptimizedVectorStore:
         query: str,
         k: int = 5,
         method: str = "keyword",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """搜索内容
 
         Args:
@@ -198,7 +198,7 @@ class OptimizedVectorStore:
         else:
             return self._search_keyword(query, k)
 
-    def _search_keyword(self, query: str, k: int) -> List[Dict[str, Any]]:
+    def _search_keyword(self, query: str, k: int) -> list[dict[str, Any]]:
         """关键词搜索"""
         query_lower = query.lower()
         results = []
@@ -211,7 +211,7 @@ class OptimizedVectorStore:
         results.sort(key=lambda x: x["timestamp"], reverse=True)
         return results[:k]
 
-    def _search_similarity(self, query: str, k: int) -> List[Dict[str, Any]]:
+    def _search_similarity(self, query: str, k: int) -> list[dict[str, Any]]:
         """相似度搜索"""
         query_tokens = self._tokenize(query)
         scored_results = []
@@ -228,7 +228,7 @@ class OptimizedVectorStore:
 
         return [entry for score, entry in scored_results[:k]]
 
-    def _search_fuzzy(self, query: str, k: int) -> List[Dict[str, Any]]:
+    def _search_fuzzy(self, query: str, k: int) -> list[dict[str, Any]]:
         """模糊搜索"""
         query_tokens = self._tokenize(query)
         results = []
@@ -257,7 +257,7 @@ class OptimizedVectorStore:
         self,
         query: str,
         k: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """混合搜索（关键词 + 相似度）
 
         Args:
@@ -291,7 +291,7 @@ class OptimizedVectorStore:
 
         return merged_results[:k]
 
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> list[dict[str, Any]]:
         """获取所有内容"""
         return self.index
 
@@ -326,7 +326,7 @@ class EnhancedMemoryManager:
     def add_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         category: str = "general",
     ) -> str:
         """添加记忆"""
@@ -342,7 +342,7 @@ class EnhancedMemoryManager:
         query: str,
         k: int = 5,
         method: str = "hybrid",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """搜索记忆
 
         Args:
@@ -358,7 +358,7 @@ class EnhancedMemoryManager:
         else:
             return self.store.search(query, k, method)
 
-    def list_memories(self) -> List[Dict[str, Any]]:
+    def list_memories(self) -> list[dict[str, Any]]:
         """列出所有记忆"""
         return self.store.get_all()
 
@@ -370,7 +370,7 @@ class EnhancedMemoryManager:
         """清空所有记忆"""
         self.store.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         memories = self.store.get_all()
 

@@ -1,8 +1,10 @@
 """测试通知命令"""
 
+from unittest.mock import patch
+
 import pytest
 from click.testing import CliRunner
-from unittest.mock import patch
+
 from lobster.commands.notify_cmd import notify
 
 

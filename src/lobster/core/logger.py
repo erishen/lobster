@@ -1,11 +1,12 @@
 """日志系统模块"""
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
-from rich.logging import RichHandler
+
 from rich.console import Console
+from rich.logging import RichHandler
 
 console = Console()
 
@@ -17,7 +18,7 @@ class LobsterLogger:
     """Lobster 日志管理器"""
 
     _instance: Optional["LobsterLogger"] = None
-    _logger: Optional[logging.Logger] = None
+    _logger: logging.Logger | None = None
 
     def __new__(cls):
         if cls._instance is None:

@@ -58,7 +58,7 @@ def _search_memories(query: str):
             table.add_column("内容", style="white")
             table.add_column("分类", style="green", width=12)
 
-            for i, mem in enumerate(results, 1):
+            for _i, mem in enumerate(results, 1):
                 content = (
                     mem["content"][:60] + "..." if len(mem["content"]) > 60 else mem["content"]
                 )
@@ -70,7 +70,7 @@ def _search_memories(query: str):
             console.print("[dim]没有找到相关记忆[/]")
 
     except Exception as e:
-        console.print(f"[red]搜索记忆失败: {str(e)}[/]")
+        console.print(f"[red]搜索记忆失败: {e!s}[/]")
 
 
 def _search_history(query: str):
@@ -119,7 +119,7 @@ def _search_history(query: str):
             console.print("[dim]没有找到相关对话[/]")
 
     except Exception as e:
-        console.print(f"[red]搜索历史失败: {str(e)}[/]")
+        console.print(f"[red]搜索历史失败: {e!s}[/]")
 
 
 def _search_project(query: str):

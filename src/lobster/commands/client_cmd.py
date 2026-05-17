@@ -94,7 +94,7 @@ def request(method, url, data, header, auth, form, output):
             console.print(f"\n✅ [green]响应已保存到: {output}[/]")
 
     except Exception as e:
-        console.print(f"\n❌ [red]请求失败: {str(e)}[/]")
+        console.print(f"\n❌ [red]请求失败: {e!s}[/]")
 
 
 @client.command()
@@ -113,9 +113,10 @@ def ping(url, interval, timeout):
     console.print("按 Ctrl+C 停止...\n")
 
     try:
-        import requests
         import time
         from datetime import datetime
+
+        import requests
 
         stats = {"success": 0, "failed": 0, "total": 0}
 
@@ -220,7 +221,7 @@ def docs(url):
             console.print(f"❌ [red]请求失败: {response.status_code}[/]")
 
     except Exception as e:
-        console.print(f"❌ [red]错误: {str(e)}[/]")
+        console.print(f"❌ [red]错误: {e!s}[/]")
 
 
 if __name__ == "__main__":

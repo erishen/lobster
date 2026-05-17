@@ -1,11 +1,12 @@
 """RAG 知识库命令模块 - 调用 langchain-llm-toolkit API"""
 
+import os
+
 import click
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
-import os
+from rich.table import Table
 
 console = Console()
 

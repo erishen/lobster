@@ -2,11 +2,11 @@
 
 import click
 from rich.console import Console
-from rich.panel import Panel
 from rich.markdown import Markdown
+from rich.panel import Panel
 
-from lobster.core.llm_client import get_llm_client
 from lobster.core.config import ConfigManager
+from lobster.core.llm_client import get_llm_client
 
 console = Console()
 
@@ -33,7 +33,7 @@ def summarize(file_path, model, length):
 
     console.print(Panel(f"📄 [bold cyan]文档总结: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -78,7 +78,7 @@ def translate(file_path, target_language, model):
         )
     )
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -119,7 +119,7 @@ def rewrite(file_path, model, output):
 
     console.print(Panel(f"✏️  [bold cyan]文档改写: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -163,7 +163,7 @@ def outline(file_path, model):
 
     console.print(Panel(f"📋 [bold cyan]生成大纲: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -202,7 +202,7 @@ def keywords(file_path, model):
 
     console.print(Panel(f"🏷️  [bold cyan]提取关键词: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -239,7 +239,7 @@ def qa(file_path, model):
 
     console.print(Panel(f"❓ [bold cyan]生成问答对: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -283,7 +283,7 @@ def slides(file_path, model, format):
 
     console.print(Panel(f"🎨 [bold cyan]生成幻灯片: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     llm = get_llm_client(model)

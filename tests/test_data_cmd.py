@@ -14,7 +14,7 @@ from click.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from lobster.commands.data_cmd import data, analyze, stats
+from lobster.commands.data_cmd import analyze, data, stats
 
 
 class TestDataGroup:
