@@ -1,12 +1,13 @@
 """Conversation history management commands"""
 
-import click
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
+import json
 from datetime import datetime
 from pathlib import Path
-import json
+
+import click
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 
@@ -44,7 +45,7 @@ def load_conversation(filename):
     if not filepath.exists():
         return None
 
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -106,7 +107,7 @@ def list():
         console.print(table)
 
     except Exception as e:
-        console.print(f"[red]Error listing conversations:[/] {str(e)}")
+        console.print(f"[red]Error listing conversations:[/] {e!s}")
 
 
 @history.command()
@@ -155,7 +156,7 @@ def show(index):
             console.print()
 
     except Exception as e:
-        console.print(f"[red]Error showing conversation:[/] {str(e)}")
+        console.print(f"[red]Error showing conversation:[/] {e!s}")
 
 
 @history.command()
@@ -184,7 +185,7 @@ def delete(index):
             console.print("[red]Error:[/] Conversation file not found")
 
     except Exception as e:
-        console.print(f"[red]Error deleting conversation:[/] {str(e)}")
+        console.print(f"[red]Error deleting conversation:[/] {e!s}")
 
 
 @history.command()
@@ -243,7 +244,7 @@ def export(index, output):
         console.print(f"[dim]File: {output_path}[/]")
 
     except Exception as e:
-        console.print(f"[red]Error exporting conversation:[/] {str(e)}")
+        console.print(f"[red]Error exporting conversation:[/] {e!s}")
 
 
 @history.command()
@@ -262,4 +263,4 @@ def clear():
         console.print("[green]✓[/] All conversation history cleared successfully")
 
     except Exception as e:
-        console.print(f"[red]Error clearing history:[/] {str(e)}")
+        console.print(f"[red]Error clearing history:[/] {e!s}")

@@ -9,7 +9,7 @@ import hashlib
 import json
 import time
 from collections import OrderedDict
-from typing import Dict, Any, Optional, Tuple
+from typing import Any
 
 
 class ToolCache:
@@ -18,7 +18,7 @@ class ToolCache:
     使用 LRU 策略管理缓存
     """
 
-    _instance: Optional["ToolCache"] = None
+    _instance: ToolCache | None = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -33,19 +33,19 @@ class ToolCache:
         if hasattr(self, "_initialized"):
             return
         self._initialized = True
-        self._cache: OrderedDict[str, Tuple[Any, float, float]] = OrderedDict()
+        self._cache: OrderedDict[str, tuple[Any, float, float]] = OrderedDict()
         self._max_size = max_size
         self._default_ttl = default_ttl
         self._hits = 0
         self._misses = 0
 
-    def _generate_key(self, tool_name: str, kwargs: Dict[str, Any]) -> str:
+    def _generate_key(self, tool_name: str, kwargs: dict[str, Any]) -> str:
         """生成缓存键"""
         sorted_kwargs = json.dumps(kwargs, sort_keys=True, default=str)
         kwargs_hash = hashlib.md5(sorted_kwargs.encode()).hexdigest()[:8]
         return f"{tool_name}:{kwargs_hash}"
 
-    def get(self, tool_name: str, kwargs: Dict[str, Any]) -> Optional[Any]:
+    def get(self, tool_name: str, kwargs: dict[str, Any]) -> Any | None:
         """获取缓存结果"""
         key = self._generate_key(tool_name, kwargs)
 
@@ -65,9 +65,9 @@ class ToolCache:
     def set(
         self,
         tool_name: str,
-        kwargs: Dict[str, Any],
+        kwargs: dict[str, Any],
         result: Any,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ):
         """设置缓存结果"""
         key = self._generate_key(tool_name, kwargs)
@@ -81,7 +81,7 @@ class ToolCache:
         while len(self._cache) > self._max_size:
             self._cache.popitem(last=False)
 
-    def invalidate(self, tool_name: str, kwargs: Dict[str, Any]) -> bool:
+    def invalidate(self, tool_name: str, kwargs: dict[str, Any]) -> bool:
         """使缓存失效"""
         key = self._generate_key(tool_name, kwargs)
         if key in self._cache:
@@ -105,7 +105,7 @@ class ToolCache:
             del self._cache[key]
         return len(expired_keys)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         total_requests = self._hits + self._misses
         hit_rate = (self._hits / total_requests * 100) if total_requests > 0 else 0
@@ -119,11 +119,11 @@ class ToolCache:
             "total_requests": total_requests,
         }
 
-    def get_cache_info(self) -> Dict[str, Any]:
+    def get_cache_info(self) -> dict[str, Any]:
         """获取缓存详细信息"""
         current_time = time.time()
         items = []
-        for key, (result, expire_time, created_time) in self._cache.items():
+        for key, (_result, expire_time, created_time) in self._cache.items():
             items.append(
                 {
                     "key": key,
@@ -147,7 +147,7 @@ def get_tool_cache() -> ToolCache:
     return tool_cache
 
 
-def cached_tool(ttl: Optional[int] = None):
+def cached_tool(ttl: int | None = None):
     """工具缓存装饰器
 
     用法:

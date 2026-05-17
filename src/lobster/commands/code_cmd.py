@@ -5,8 +5,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
 
-from lobster.core.llm_client import get_llm_client
 from lobster.core.config import ConfigManager
+from lobster.core.llm_client import get_llm_client
 
 console = Console()
 
@@ -32,7 +32,7 @@ def review(file_path, model):
 
     console.print(Panel(f"🔍 [bold cyan]代码审查: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         code_content = f.read()
 
     console.print("\n📄 [bold]代码内容:[/bold]")
@@ -78,7 +78,7 @@ def explain(file_path, model):
 
     console.print(Panel(f"📖 [bold cyan]代码解释: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         code_content = f.read()
 
     console.print("\n📄 [bold]代码内容:[/bold]")
@@ -124,7 +124,7 @@ def refactor(file_path, model, focus):
 
     console.print(Panel(f"🔧 [bold cyan]重构建议: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         code_content = f.read()
 
     llm = get_llm_client(model)
@@ -173,7 +173,7 @@ def test(file_path, language, model):
 
     console.print(Panel(f"🧪 [bold cyan]生成测试: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         code_content = f.read()
 
     llm = get_llm_client(model)
@@ -220,7 +220,7 @@ def translate(file_path, target_language, model):
         )
     )
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         code_content = f.read()
 
     llm = get_llm_client(model)
@@ -260,7 +260,7 @@ def document(file_path, model):
 
     console.print(Panel(f"📝 [bold cyan]生成文档: {file_path}[/bold cyan]", border_style="blue"))
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         code_content = f.read()
 
     llm = get_llm_client(model)

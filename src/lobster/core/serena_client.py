@@ -11,9 +11,9 @@ from __future__ import annotations
 import json
 import os
 import sys
-from pathlib import Path
-from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from lobster.core.tools import ToolRegistry
@@ -64,7 +64,7 @@ class SerenaConfig:
 class SerenaClient:
     """Serena 客户端 - 提供代码理解、重构等 IDE 级别能力"""
 
-    _instance: Optional["SerenaClient"] = None
+    _instance: SerenaClient | None = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -75,8 +75,8 @@ class SerenaClient:
         if hasattr(self, "_initialized"):
             return
         self._initialized = True
-        self._config: Optional[SerenaConfig] = None
-        self._agent: Optional[Any] = None
+        self._config: SerenaConfig | None = None
+        self._agent: Any | None = None
 
     def is_available(self) -> bool:
         """检查 Serena 是否可用"""
@@ -86,7 +86,7 @@ class SerenaClient:
         """检查是否已初始化"""
         return self._agent is not None
 
-    def initialize(self, project_path: str, language_backend: str = "LSP") -> Dict[str, Any]:
+    def initialize(self, project_path: str, language_backend: str = "LSP") -> dict[str, Any]:
         """初始化 Serena 客户端
 
         Args:
@@ -117,7 +117,7 @@ class SerenaClient:
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Serena 初始化失败: {str(e)}",
+                "error": f"Serena 初始化失败: {e!s}",
             }
 
     def _get_tool(self, tool_class: type) -> Any:
@@ -126,7 +126,7 @@ class SerenaClient:
             raise RuntimeError("Serena 未初始化，请先调用 initialize()")
         return self._agent.get_tool(tool_class)
 
-    def _execute_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
+    def _execute_tool(self, tool_name: str, **kwargs) -> dict[str, Any]:
         """执行工具并返回结果"""
         if not _serena_available:
             return {"error": "Serena 未安装。请设置 SERENA_DIR 环境变量。"}
@@ -145,7 +145,7 @@ class SerenaClient:
         except Exception as e:
             return {"error": str(e)}
 
-    def get_symbols_overview(self, relative_path: str, depth: int = 0) -> Dict[str, Any]:
+    def get_symbols_overview(self, relative_path: str, depth: int = 0) -> dict[str, Any]:
         """获取文件符号概览
 
         Args:
@@ -161,10 +161,10 @@ class SerenaClient:
     def find_symbol(
         self,
         name_path_pattern: str,
-        relative_path: Optional[str] = None,
+        relative_path: str | None = None,
         depth: int = 0,
         include_body: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """查找符号
 
         Args:
@@ -173,7 +173,7 @@ class SerenaClient:
             depth: 获取子节点的深度
             include_body: 是否包含函数体
         """
-        kwargs: Dict[str, Any] = {"name_path_pattern": name_path_pattern}
+        kwargs: dict[str, Any] = {"name_path_pattern": name_path_pattern}
         if relative_path is not None:
             kwargs["relative_path"] = relative_path
         if depth > 0:
@@ -187,9 +187,9 @@ class SerenaClient:
         self,
         name_path: str,
         relative_path: str,
-        include_kinds: Optional[List[int]] = None,
-        exclude_kinds: Optional[List[int]] = None,
-    ) -> Dict[str, Any]:
+        include_kinds: list[int] | None = None,
+        exclude_kinds: list[int] | None = None,
+    ) -> dict[str, Any]:
         """查找引用特定符号的代码
 
         Args:
@@ -198,7 +198,7 @@ class SerenaClient:
             include_kinds: 包含的符号类型
             exclude_kinds: 排除的符号类型
         """
-        kwargs: Dict[str, Any] = {
+        kwargs: dict[str, Any] = {
             "name_path": name_path,
             "relative_path": relative_path,
         }
@@ -214,7 +214,7 @@ class SerenaClient:
         name_path: str,
         new_name: str,
         relative_path: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """重命名符号
 
         Args:
@@ -234,7 +234,7 @@ class SerenaClient:
         name_path: str,
         body: str,
         relative_path: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """替换符号体
 
         Args:
@@ -252,13 +252,13 @@ class SerenaClient:
     def search_for_pattern(
         self,
         substring_pattern: str,
-        relative_path: Optional[str] = None,
-        paths_include_glob: Optional[str] = None,
-        paths_exclude_glob: Optional[str] = None,
+        relative_path: str | None = None,
+        paths_include_glob: str | None = None,
+        paths_exclude_glob: str | None = None,
         context_lines_before: int = 0,
         context_lines_after: int = 0,
         restrict_search_to_code_files: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """正则搜索
 
         Args:
@@ -270,7 +270,7 @@ class SerenaClient:
             context_lines_after: 后置上下文行数
             restrict_search_to_code_files: 是否限制为代码文件
         """
-        kwargs: Dict[str, Any] = {"substring_pattern": substring_pattern}
+        kwargs: dict[str, Any] = {"substring_pattern": substring_pattern}
         if relative_path is not None:
             kwargs["relative_path"] = relative_path
         if paths_include_glob is not None:
@@ -286,7 +286,7 @@ class SerenaClient:
 
         return self._execute_tool("search_for_pattern", **kwargs)
 
-    def find_file(self, file_mask: str, relative_path: str = ".") -> Dict[str, Any]:
+    def find_file(self, file_mask: str, relative_path: str = ".") -> dict[str, Any]:
         """查找文件
 
         Args:
@@ -299,7 +299,7 @@ class SerenaClient:
             relative_path=relative_path,
         )
 
-    def get_current_config(self) -> Dict[str, Any]:
+    def get_current_config(self) -> dict[str, Any]:
         """获取当前配置"""
         return {
             "available": _serena_available,
@@ -317,7 +317,7 @@ def get_serena_client() -> SerenaClient:
     return serena_client
 
 
-def register_serena_tools(registry: "ToolRegistry"):
+def register_serena_tools(registry: ToolRegistry):
     """注册 Serena 工具到注册表"""
     from lobster.core.tools import Tool
 

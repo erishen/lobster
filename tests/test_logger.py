@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from lobster.core.logger import LobsterLogger, logger, get_logger
+from lobster.core.logger import LobsterLogger, get_logger, logger
 
 
 class TestLobsterLogger:

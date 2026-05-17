@@ -14,14 +14,14 @@ from click.testing import CliRunner
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from lobster.commands.scheduler_cmd import (
-    scheduler,
-    add,
-    list,
-    enable,
-    disable,
-    remove,
     _load_tasks,
     _save_tasks,
+    add,
+    disable,
+    enable,
+    list,
+    remove,
+    scheduler,
 )
 
 

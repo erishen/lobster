@@ -6,12 +6,12 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import Optional, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
 
-def load_env_file(env_path: Optional[Path] = None) -> dict:
+def load_env_file(env_path: Path | None = None) -> dict:
     """加载 .env 文件"""
     if env_path is None:
         env_path = Path.cwd() / ".env"
@@ -20,7 +20,7 @@ def load_env_file(env_path: Optional[Path] = None) -> dict:
         return {}
 
     env_vars = {}
-    with open(env_path, "r", encoding="utf-8") as f:
+    with open(env_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
@@ -29,9 +29,7 @@ def load_env_file(env_path: Optional[Path] = None) -> dict:
                 key, value = line.split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1]
-                elif value.startswith("'") and value.endswith("'"):
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                     value = value[1:-1]
                 env_vars[key] = value
 
@@ -69,7 +67,7 @@ class LobsterConfig:
         if not self._env_loaded:
             self.load_from_env()
 
-    def load_from_env(self, env_path: Optional[Path] = None) -> "LobsterConfig":
+    def load_from_env(self, env_path: Path | None = None) -> LobsterConfig:
         """从环境变量和 .env 文件加载配置"""
         env_vars = load_env_file(env_path)
 
@@ -184,4 +182,4 @@ class ConfigManager:
         return self._config.to_dict()
 
 
-__all__ = ["LobsterConfig", "config", "get_config", "ConfigManager", "load_env_file"]
+__all__ = ["ConfigManager", "LobsterConfig", "config", "get_config", "load_env_file"]

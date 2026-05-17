@@ -3,8 +3,8 @@
 from lobster.core.stats import (
     ToolStats,
     ToolStatsTracker,
-    stats_tracker,
     get_stats_tracker,
+    stats_tracker,
 )
 
 

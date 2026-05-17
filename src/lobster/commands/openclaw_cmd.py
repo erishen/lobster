@@ -1,11 +1,12 @@
 """OpenClaw 集成命令模块"""
 
-import click
 import subprocess
+
+import click
 import requests
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 
@@ -38,7 +39,7 @@ def status():
         console.print("\n❌ [bold red]OpenClaw 未运行[/bold red]")
         console.print("\n💡 提示: 运行 'lobster openclaw start' 启动服务")
     except Exception as e:
-        console.print(f"\n❌ [bold red]检查失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]检查失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -72,7 +73,7 @@ def start(port, host, model, daemon):
     except KeyboardInterrupt:
         console.print("\n\n✅ [bold green]服务已停止[/bold green]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]启动失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]启动失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -89,7 +90,7 @@ def stop():
     except FileNotFoundError:
         console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]停止失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]停止失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -108,7 +109,7 @@ def logs(follow):
     except KeyboardInterrupt:
         console.print("\n\n✅ [bold green]日志查看结束[/bold green]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]查看日志失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]查看日志失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -125,7 +126,7 @@ def config():
     except FileNotFoundError:
         console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]获取配置失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]获取配置失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -144,7 +145,7 @@ def chat(model):
     except KeyboardInterrupt:
         console.print("\n\n✅ [bold green]对话结束[/bold green]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]对话失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]对话失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -161,7 +162,7 @@ def models():
     except FileNotFoundError:
         console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]获取模型列表失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]获取模型列表失败: {e!s}[/bold red]")
 
 
 @openclaw.command()
@@ -175,7 +176,7 @@ def pull(model_name):
     except FileNotFoundError:
         console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
     except Exception as e:
-        console.print(f"\n❌ [bold red]拉取模型失败: {str(e)}[/bold red]")
+        console.print(f"\n❌ [bold red]拉取模型失败: {e!s}[/bold red]")
 
 
 @openclaw.command()

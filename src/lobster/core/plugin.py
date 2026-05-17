@@ -3,7 +3,8 @@
 import importlib.util
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from rich.console import Console
 from rich.table import Table
 
@@ -23,7 +24,7 @@ class Plugin:
         """Register a CLI command"""
         self.commands.append(command)
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get plugin information"""
         return {
             "name": self.name,
@@ -39,7 +40,7 @@ class PluginManager:
     def __init__(self):
         self.plugins_dir = Path.home() / ".lobster" / "plugins"
         self.plugins_dir.mkdir(parents=True, exist_ok=True)
-        self.plugins: Dict[str, Plugin] = {}
+        self.plugins: dict[str, Plugin] = {}
         self._load_plugins()
 
     def _load_plugins(self):
@@ -54,7 +55,7 @@ class PluginManager:
                     try:
                         self._load_plugin(plugin_dir.name, plugin_file)
                     except Exception as e:
-                        console.print(f"[red]Error loading plugin {plugin_dir.name}:[/] {str(e)}")
+                        console.print(f"[red]Error loading plugin {plugin_dir.name}:[/] {e!s}")
 
     def _load_plugin(self, plugin_name: str, plugin_file: Path):
         """Load a single plugin"""
@@ -69,11 +70,11 @@ class PluginManager:
                 if isinstance(plugin_instance, Plugin):
                     self.plugins[plugin_name] = plugin_instance
 
-    def get_plugin(self, name: str) -> Optional[Plugin]:
+    def get_plugin(self, name: str) -> Plugin | None:
         """Get a plugin by name"""
         return self.plugins.get(name)
 
-    def list_plugins(self) -> List[Dict[str, Any]]:
+    def list_plugins(self) -> list[dict[str, Any]]:
         """List all loaded plugins"""
         return [plugin.get_info() for plugin in self.plugins.values()]
 

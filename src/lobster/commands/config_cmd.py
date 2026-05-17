@@ -2,8 +2,8 @@
 
 import click
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 
@@ -57,7 +57,7 @@ def set(key, value):
         manager.set(key, value)
         console.print(f"[green]✓[/] Configuration updated: {key} = {value}")
     except Exception as e:
-        console.print(f"[red]Error:[/] {str(e)}")
+        console.print(f"[red]Error:[/] {e!s}")
 
 
 @config_cmd.command()

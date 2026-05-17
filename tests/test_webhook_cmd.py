@@ -2,6 +2,7 @@
 
 import pytest
 from click.testing import CliRunner
+
 from lobster.commands.webhook_cmd import webhook
 
 

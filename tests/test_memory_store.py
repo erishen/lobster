@@ -1,7 +1,8 @@
 """测试优化后的记忆存储"""
 
 import pytest
-from lobster.core.memory_store import OptimizedVectorStore, EnhancedMemoryManager
+
+from lobster.core.memory_store import EnhancedMemoryManager, OptimizedVectorStore
 
 
 class TestOptimizedVectorStore:

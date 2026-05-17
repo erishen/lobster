@@ -1,11 +1,12 @@
 """Serena 代码分析命令模块"""
 
+import json
+
 import click
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.syntax import Syntax
-import json
+from rich.table import Table
 
 console = Console()
 
@@ -25,8 +26,9 @@ def init(project_path):
         lobster serena init
         lobster serena init /path/to/project
     """
-    from lobster.core.serena_client import get_serena_client
     import os
+
+    from lobster.core.serena_client import get_serena_client
 
     client = get_serena_client()
 

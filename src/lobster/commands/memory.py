@@ -1,12 +1,13 @@
 """Memory management commands for OpenClaw"""
 
-import click
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
+import json
 from datetime import datetime
 from pathlib import Path
-import json
+
+import click
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 
@@ -27,7 +28,7 @@ def ensure_memory_dir():
 def load_memory_index():
     """Load memory index"""
     if MEMORY_INDEX_FILE.exists():
-        with open(MEMORY_INDEX_FILE, "r") as f:
+        with open(MEMORY_INDEX_FILE) as f:
             return json.load(f)
     return {"memories": []}
 
@@ -52,8 +53,8 @@ def memory():
 def add(content, tag, category):
     """Add a new memory to OpenClaw's memory store"""
     try:
-        from langchain_llm_toolkit import RAGSystem
         from langchain_core.documents import Document
+        from langchain_llm_toolkit import RAGSystem
 
         ensure_memory_dir()
 
@@ -111,7 +112,7 @@ def add(content, tag, category):
         console.print("[red]Error:[/] langchain-llm-toolkit not installed")
         console.print("[yellow]Install with:[/] pip install langchain-llm-toolkit")
     except Exception as e:
-        console.print(f"[red]Error adding memory:[/] {str(e)}")
+        console.print(f"[red]Error adding memory:[/] {e!s}")
 
 
 @memory.command()
@@ -161,7 +162,7 @@ def list(category, tag, limit):
         console.print(table)
 
     except Exception as e:
-        console.print(f"[red]Error listing memories:[/] {str(e)}")
+        console.print(f"[red]Error listing memories:[/] {e!s}")
 
 
 @memory.command()
@@ -217,7 +218,7 @@ def search(query, k):
         console.print("[red]Error:[/] langchain-llm-toolkit not installed")
         console.print("[yellow]Install with:[/] pip install langchain-llm-toolkit")
     except Exception as e:
-        console.print(f"[red]Error searching memories:[/] {str(e)}")
+        console.print(f"[red]Error searching memories:[/] {e!s}")
 
 
 @memory.command()
@@ -250,7 +251,7 @@ def delete(memory_id):
         )
 
     except Exception as e:
-        console.print(f"[red]Error deleting memory:[/] {str(e)}")
+        console.print(f"[red]Error deleting memory:[/] {e!s}")
 
 
 @memory.command()
@@ -269,7 +270,7 @@ def clear():
         console.print("[green]✓[/] All memories cleared successfully")
 
     except Exception as e:
-        console.print(f"[red]Error clearing memories:[/] {str(e)}")
+        console.print(f"[red]Error clearing memories:[/] {e!s}")
 
 
 @memory.command()
@@ -310,4 +311,4 @@ def stats():
             console.print(f"  • {cat}: {count} memories")
 
     except Exception as e:
-        console.print(f"[red]Error getting stats:[/] {str(e)}")
+        console.print(f"[red]Error getting stats:[/] {e!s}")

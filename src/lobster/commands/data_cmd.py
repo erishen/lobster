@@ -1,14 +1,15 @@
 """数据分析工具命令模块"""
 
+import json
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from pathlib import Path
-import json
 
-from lobster.core.llm_client import get_llm_client
 from lobster.core.config import ConfigManager
+from lobster.core.llm_client import get_llm_client
 
 console = Console()
 
@@ -35,7 +36,7 @@ def analyze(file_path, model):
     console.print(Panel(f"📊 [bold cyan]数据分析: {file_path}[/bold cyan]", border_style="blue"))
 
     # 读取文件
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # 显示文件信息
@@ -77,7 +78,7 @@ def stats(file_path, output):
     console.print(Panel(f"📈 [bold cyan]统计信息: {file_path}[/bold cyan]", border_style="blue"))
 
     # 读取文件
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # 基本统计
@@ -123,7 +124,7 @@ def convert(file_path, output_format, output):
     )
 
     # 读取文件
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # 简单的格式转换逻辑
@@ -170,7 +171,7 @@ def clean(file_path, model):
     console.print(Panel(f"🧹 [bold cyan]数据清洗: {file_path}[/bold cyan]", border_style="blue"))
 
     # 读取文件
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     llm = get_llm_client(model)
@@ -209,7 +210,7 @@ def summarize(file_path, model):
     console.print(Panel(f"📝 [bold cyan]数据摘要: {file_path}[/bold cyan]", border_style="blue"))
 
     # 读取文件
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     llm = get_llm_client(model)

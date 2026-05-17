@@ -1,11 +1,12 @@
 """Prompt template management commands"""
 
+import json
+from pathlib import Path
+
 import click
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from pathlib import Path
-import json
+from rich.table import Table
 
 console = Console()
 
@@ -62,7 +63,7 @@ def show(name):
         console.print(f"[red]Error:[/] Template '{name}' not found")
         return
 
-    with open(template_file, "r", encoding="utf-8") as f:
+    with open(template_file, encoding="utf-8") as f:
         template_data = json.load(f)
 
     console.print(
@@ -128,7 +129,7 @@ def edit(name):
         console.print(f"[red]Error:[/] Template '{name}' not found")
         return
 
-    with open(template_file, "r", encoding="utf-8") as f:
+    with open(template_file, encoding="utf-8") as f:
         template_data = json.load(f)
 
     template_text = click.edit(template_data.get("template", ""))
@@ -182,7 +183,7 @@ def apply(name, model):
         console.print(f"[red]Error:[/] Template '{name}' not found")
         return
 
-    with open(template_file, "r", encoding="utf-8") as f:
+    with open(template_file, encoding="utf-8") as f:
         template_data = json.load(f)
 
     template_text = template_data.get("template", "")
@@ -215,7 +216,7 @@ def apply(name, model):
     except ImportError:
         console.print("[red]Error:[/] langchain-llm-toolkit not installed")
     except Exception as e:
-        console.print(f"[red]Error:[/] {str(e)}")
+        console.print(f"[red]Error:[/] {e!s}")
 
 
 @template.command()
@@ -279,7 +280,7 @@ def list_templates():
 
     for template_file in TEMPLATES_DIR.glob("*.json"):
         try:
-            with open(template_file, "r", encoding="utf-8") as f:
+            with open(template_file, encoding="utf-8") as f:
                 template_data = json.load(f)
                 templates.append(template_data)
         except Exception:

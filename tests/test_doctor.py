@@ -1,13 +1,14 @@
 """Tests for system diagnostics"""
 
-from unittest.mock import patch, Mock
 import tempfile
+from unittest.mock import Mock, patch
 
 
 def test_doctor_check():
     """Test system check"""
-    from lobster.commands.doctor import check
     from click.testing import CliRunner
+
+    from lobster.commands.doctor import check
 
     # Mock successful Ollama response
     mock_response = Mock()
@@ -25,8 +26,9 @@ def test_doctor_check():
 
 def test_doctor_info():
     """Test system information"""
-    from lobster.commands.doctor import info
     from click.testing import CliRunner
+
+    from lobster.commands.doctor import info
 
     runner = CliRunner()
     result = runner.invoke(info)
@@ -39,8 +41,9 @@ def test_doctor_info():
 
 def test_doctor_fix():
     """Test fixing common issues"""
-    from lobster.commands.doctor import fix
     from click.testing import CliRunner
+
+    from lobster.commands.doctor import fix
 
     with tempfile.TemporaryDirectory() as tmpdir:
         from pathlib import Path
@@ -56,8 +59,9 @@ def test_doctor_fix():
 
 def test_doctor_deps():
     """Test showing dependencies"""
-    from lobster.commands.doctor import deps
     from click.testing import CliRunner
+
+    from lobster.commands.doctor import deps
 
     runner = CliRunner()
     result = runner.invoke(deps)

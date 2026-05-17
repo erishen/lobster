@@ -1,11 +1,13 @@
 """测试 LLM 客户端功能"""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from lobster.core.llm_client import (
     ConversationManager,
-    ResponseCache,
     EnhancedLLMClient,
+    ResponseCache,
     get_llm_client,
 )
 

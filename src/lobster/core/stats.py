@@ -8,11 +8,10 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-
+from typing import Any
 
 STATS_DIR = Path.home() / ".lobster" / "stats"
 STATS_DIR.mkdir(parents=True, exist_ok=True)
@@ -27,7 +26,7 @@ class ToolCallRecord:
     timestamp: float
     success: bool
     duration_ms: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -40,8 +39,8 @@ class ToolStats:
     total_duration_ms: float = 0.0
     min_duration_ms: float = float("inf")
     max_duration_ms: float = 0.0
-    last_called: Optional[float] = None
-    errors: Dict[str, int] = field(default_factory=dict)
+    last_called: float | None = None
+    errors: dict[str, int] = field(default_factory=dict)
 
     @property
     def success_rate(self) -> float:
@@ -57,7 +56,7 @@ class ToolStats:
             return 0.0
         return self.total_duration_ms / self.total_calls
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "total_calls": self.total_calls,
@@ -80,7 +79,7 @@ class ToolStats:
 class ToolStatsTracker:
     """工具统计追踪器"""
 
-    _instance: Optional["ToolStatsTracker"] = None
+    _instance: ToolStatsTracker | None = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -91,8 +90,8 @@ class ToolStatsTracker:
         if hasattr(self, "_initialized"):
             return
         self._initialized = True
-        self._stats: Dict[str, ToolStats] = defaultdict(ToolStats)
-        self._recent_calls: List[ToolCallRecord] = []
+        self._stats: dict[str, ToolStats] = defaultdict(ToolStats)
+        self._recent_calls: list[ToolCallRecord] = []
         self._max_recent_calls = 100
         self._load_stats()
 
@@ -100,7 +99,7 @@ class ToolStatsTracker:
         """从文件加载统计数据"""
         if STATS_FILE.exists():
             try:
-                with open(STATS_FILE, "r", encoding="utf-8") as f:
+                with open(STATS_FILE, encoding="utf-8") as f:
                     data = json.load(f)
                     for tool_name, stats_data in data.get("tools", {}).items():
                         stats = ToolStats()
@@ -133,7 +132,7 @@ class ToolStatsTracker:
         tool_name: str,
         success: bool,
         duration_ms: float,
-        error: Optional[str] = None,
+        error: str | None = None,
     ):
         """记录工具调用"""
         stats = self._stats[tool_name]
@@ -167,15 +166,15 @@ class ToolStatsTracker:
 
         self._save_stats()
 
-    def get_stats(self, tool_name: str) -> Optional[ToolStats]:
+    def get_stats(self, tool_name: str) -> ToolStats | None:
         """获取单个工具的统计信息"""
         return self._stats.get(tool_name)
 
-    def get_all_stats(self) -> Dict[str, ToolStats]:
+    def get_all_stats(self) -> dict[str, ToolStats]:
         """获取所有工具的统计信息"""
         return dict(self._stats)
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """获取统计摘要"""
         total_calls = sum(s.total_calls for s in self._stats.values())
         total_successful = sum(s.successful_calls for s in self._stats.values())
@@ -194,12 +193,12 @@ class ToolStatsTracker:
             "slowest": self._get_slowest(5),
         }
 
-    def _get_most_used(self, limit: int = 5) -> List[Dict[str, Any]]:
+    def _get_most_used(self, limit: int = 5) -> list[dict[str, Any]]:
         """获取使用最多的工具"""
         sorted_tools = sorted(self._stats.items(), key=lambda x: x[1].total_calls, reverse=True)
         return [{"name": name, "calls": stats.total_calls} for name, stats in sorted_tools[:limit]]
 
-    def _get_slowest(self, limit: int = 5) -> List[Dict[str, Any]]:
+    def _get_slowest(self, limit: int = 5) -> list[dict[str, Any]]:
         """获取执行最慢的工具"""
         sorted_tools = sorted(self._stats.items(), key=lambda x: x[1].avg_duration_ms, reverse=True)
         return [
@@ -208,7 +207,7 @@ class ToolStatsTracker:
             if stats.total_calls > 0
         ]
 
-    def get_recent_calls(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_recent_calls(self, limit: int = 10) -> list[dict[str, Any]]:
         """获取最近的调用记录"""
         return [
             {

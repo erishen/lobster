@@ -1,11 +1,12 @@
 """Webhook 命令模块"""
 
+import json
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from pathlib import Path
-import json
 
 console = Console()
 
@@ -128,7 +129,7 @@ def test(name):
     except ImportError:
         console.print("[red]Error: requests 库未安装[/]")
     except Exception as e:
-        console.print(f"❌ [red]测试失败: {str(e)}[/]")
+        console.print(f"❌ [red]测试失败: {e!s}[/]")
 
 
 @webhook.command()
@@ -170,9 +171,9 @@ def trigger(event, data):
             continue
 
         try:
-            import requests
-
             import json
+
+            import requests
 
             event_data = json.loads(data) if data != "{}" else {}
 
@@ -195,7 +196,7 @@ def trigger(event, data):
                 console.print(f"❌ {name}: 失败 ({response.status_code})")
 
         except Exception as e:
-            console.print(f"❌ {name}: 错误 - {str(e)}")
+            console.print(f"❌ {name}: 错误 - {e!s}")
 
     console.print(f"\n触发 {len(triggered)}/{len(hooks)} Webhooks")
 
@@ -203,7 +204,7 @@ def trigger(event, data):
 def _load_webhooks() -> dict:
     """加载 Webhook 列表"""
     if WEBHOOK_FILE.exists():
-        with open(WEBHOOK_FILE, "r", encoding="utf-8") as f:
+        with open(WEBHOOK_FILE, encoding="utf-8") as f:
             return json.load(f)
     return {}
 

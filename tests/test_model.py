@@ -1,13 +1,15 @@
 """Tests for model management commands"""
 
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 import requests
 
 
 def test_model_list_success():
     """Test listing models successfully"""
-    from lobster.commands.model import list
     from click.testing import CliRunner
+
+    from lobster.commands.model import list
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -32,8 +34,9 @@ def test_model_list_success():
 
 def test_model_list_no_models():
     """Test listing models when none installed"""
-    from lobster.commands.model import list
     from click.testing import CliRunner
+
+    from lobster.commands.model import list
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -49,8 +52,9 @@ def test_model_list_no_models():
 
 def test_model_list_connection_error():
     """Test listing models with connection error"""
-    from lobster.commands.model import list
     from click.testing import CliRunner
+
+    from lobster.commands.model import list
 
     with patch("requests.get", side_effect=requests.exceptions.ConnectionError()):
         runner = CliRunner()
@@ -62,8 +66,9 @@ def test_model_list_connection_error():
 
 def test_model_popular():
     """Test showing popular models"""
-    from lobster.commands.model import popular
     from click.testing import CliRunner
+
+    from lobster.commands.model import popular
 
     runner = CliRunner()
     result = runner.invoke(popular)
@@ -76,8 +81,9 @@ def test_model_popular():
 
 def test_model_info_success():
     """Test getting model info successfully"""
-    from lobster.commands.model import info
     from click.testing import CliRunner
+
+    from lobster.commands.model import info
 
     mock_response = Mock()
     mock_response.status_code = 200
@@ -97,8 +103,9 @@ def test_model_info_success():
 
 def test_model_info_not_found():
     """Test getting info for non-existent model"""
-    from lobster.commands.model import info
     from click.testing import CliRunner
+
+    from lobster.commands.model import info
 
     mock_response = Mock()
     mock_response.status_code = 404
@@ -113,8 +120,9 @@ def test_model_info_not_found():
 
 def test_model_ps_no_models():
     """Test showing running models when none running"""
-    from lobster.commands.model import ps
     from click.testing import CliRunner
+
+    from lobster.commands.model import ps
 
     mock_response = Mock()
     mock_response.status_code = 200

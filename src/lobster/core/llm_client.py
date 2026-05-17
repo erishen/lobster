@@ -1,12 +1,13 @@
 """增强的 LLM 客户端 - 支持对话管理、批量生成、缓存"""
 
-from typing import Optional, List, Dict, Any
-import litellm
-from rich.console import Console
-from pathlib import Path
+import hashlib
 import json
 from datetime import datetime
-import hashlib
+from pathlib import Path
+from typing import Any
+
+import litellm
+from rich.console import Console
 
 console = Console()
 
@@ -19,7 +20,7 @@ class ConversationManager:
 
     def __init__(self, max_history: int = 10):
         self.max_history = max_history
-        self.history: List[Dict[str, str]] = []
+        self.history: list[dict[str, str]] = []
 
     def add_message(self, role: str, content: str):
         """添加消息"""
@@ -33,7 +34,7 @@ class ConversationManager:
             keep_count = self.max_history * 2 - len(system_messages)
             self.history = system_messages + other_messages[-keep_count:]
 
-    def get_messages(self) -> List[Dict[str, str]]:
+    def get_messages(self) -> list[dict[str, str]]:
         """获取所有消息"""
         return self.history.copy()
 
@@ -41,7 +42,7 @@ class ConversationManager:
         """清空历史"""
         self.history = []
 
-    def get_last_n_messages(self, n: int) -> List[Dict[str, str]]:
+    def get_last_n_messages(self, n: int) -> list[dict[str, str]]:
         """获取最后 n 条消息"""
         return self.history[-n:] if n > 0 else []
 
@@ -67,14 +68,14 @@ class ResponseCache:
 
     def _get_cache_key(self, prompt: str, model: str, **kwargs) -> str:
         """生成缓存键"""
-        cache_data = f"{prompt}:{model}:{str(sorted(kwargs.items()))}"
+        cache_data = f"{prompt}:{model}:{sorted(kwargs.items())!s}"
         return hashlib.md5(cache_data.encode()).hexdigest()
 
     def _get_cache_file(self, cache_key: str) -> Path:
         """获取缓存文件路径"""
         return self.cache_dir / f"{cache_key}.json"
 
-    def get(self, prompt: str, model: str, **kwargs) -> Optional[str]:
+    def get(self, prompt: str, model: str, **kwargs) -> str | None:
         """获取缓存"""
         cache_key = self._get_cache_key(prompt, model, **kwargs)
         cache_file = self._get_cache_file(cache_key)
@@ -83,7 +84,7 @@ class ResponseCache:
             return None
 
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 cache_data = json.load(f)
 
             # 检查是否过期
@@ -118,7 +119,7 @@ class ResponseCache:
         for cache_file in self.cache_dir.glob("*.json"):
             cache_file.unlink()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         cache_files = list(self.cache_dir.glob("*.json"))
         total_size = sum(f.stat().st_size for f in cache_files)
@@ -165,7 +166,7 @@ class EnhancedLLMClient:
     def generate(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         use_cache: bool = True,
     ) -> str:
         """生成文本
@@ -212,8 +213,8 @@ class EnhancedLLMClient:
 
             except Exception as e:
                 if attempt == self.max_retries - 1:
-                    console.print(f"[red]LLM 调用失败（重试 {self.max_retries} 次后）: {str(e)}[/]")
-                    return f"错误: {str(e)}"
+                    console.print(f"[red]LLM 调用失败（重试 {self.max_retries} 次后）: {e!s}[/]")
+                    return f"错误: {e!s}"
                 console.print(
                     f"[yellow]LLM 调用失败，重试中... ({attempt + 1}/{self.max_retries})[/]"
                 )
@@ -221,7 +222,7 @@ class EnhancedLLMClient:
     def generate_stream(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
     ):
         """流式生成文本"""
         messages = []
@@ -243,12 +244,12 @@ class EnhancedLLMClient:
                     yield chunk.choices[0].delta.content
 
         except Exception as e:
-            yield f"错误: {str(e)}"
+            yield f"错误: {e!s}"
 
     def chat(
         self,
         message: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
     ) -> str:
         """多轮对话
 
@@ -283,14 +284,14 @@ class EnhancedLLMClient:
             return assistant_message
 
         except Exception as e:
-            console.print(f"[red]对话失败: {str(e)}[/]")
-            return f"错误: {str(e)}"
+            console.print(f"[red]对话失败: {e!s}[/]")
+            return f"错误: {e!s}"
 
     def batch_generate(
         self,
-        prompts: List[str],
-        system_prompt: Optional[str] = None,
-    ) -> List[str]:
+        prompts: list[str],
+        system_prompt: str | None = None,
+    ) -> list[str]:
         """批量生成
 
         Args:
@@ -318,7 +319,7 @@ class EnhancedLLMClient:
         if self.cache:
             self.cache.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         stats = {
             "model": self.model,
@@ -335,7 +336,7 @@ class EnhancedLLMClient:
 LLMClient = EnhancedLLMClient
 
 
-def get_llm_client(model: Optional[str] = None, **kwargs) -> EnhancedLLMClient:
+def get_llm_client(model: str | None = None, **kwargs) -> EnhancedLLMClient:
     """获取 LLM 客户端"""
     from lobster.core.config import ConfigManager
 

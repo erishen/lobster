@@ -10,26 +10,27 @@
 
 from __future__ import annotations
 
+import functools
+import json
 import subprocess
 import sys
-import json
 import time
-import functools
-from typing import Dict, List, Any, Callable, Optional
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
+from lobster.core.cache import tool_cache
 from lobster.core.errors import (
     ErrorCode,
     LobsterError,
     error_response,
     success_response,
 )
-from lobster.core.stats import stats_tracker
-from lobster.core.cache import tool_cache
 from lobster.core.investment import register_investment_tools
 from lobster.core.serena_client import register_serena_tools
+from lobster.core.stats import stats_tracker
 
 
 def measure_performance(func):
@@ -51,7 +52,7 @@ def measure_performance(func):
 
             from lobster.core.logger import logger
 
-            logger.error(f"{func.__name__} failed after {duration_ms:.2f}ms: {str(e)}")
+            logger.error(f"{func.__name__} failed after {duration_ms:.2f}ms: {e!s}")
             raise
 
     return wrapper
@@ -63,7 +64,7 @@ class Tool:
 
     name: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     handler: Callable
     category: str = "general"
 
@@ -72,8 +73,8 @@ class Tool:
 class SecurityConfig:
     """安全配置"""
 
-    allowed_base_dirs: List[str] = field(default_factory=lambda: ["."])
-    blocked_commands: List[str] = field(
+    allowed_base_dirs: list[str] = field(default_factory=lambda: ["."])
+    blocked_commands: list[str] = field(
         default_factory=lambda: [
             "rm -rf /",
             "rm -rf /*",
@@ -86,7 +87,7 @@ class SecurityConfig:
             "curl -X DELETE",
         ]
     )
-    allowed_commands: Optional[List[str]] = None
+    allowed_commands: list[str] | None = None
     max_file_size: int = 10 * 1024 * 1024
     max_content_size: int = 1 * 1024 * 1024
 
@@ -94,14 +95,14 @@ class SecurityConfig:
 security_config = SecurityConfig()
 
 
-def validate_path(path: str, allow_create: bool = False) -> Dict[str, Any]:
+def validate_path(path: str, allow_create: bool = False) -> dict[str, Any]:
     """验证路径安全性"""
     try:
         file_path = Path(path).resolve()
     except Exception as e:
         return {
             "valid": False,
-            "error": LobsterError(ErrorCode.PATH_INVALID, f"无效路径: {str(e)}"),
+            "error": LobsterError(ErrorCode.PATH_INVALID, f"无效路径: {e!s}"),
         }
 
     if not allow_create and not file_path.exists():
@@ -130,7 +131,7 @@ def validate_path(path: str, allow_create: bool = False) -> Dict[str, Any]:
     return {"valid": True, "path": file_path}
 
 
-def validate_command(command: str) -> Dict[str, Any]:
+def validate_command(command: str) -> dict[str, Any]:
     """验证命令安全性"""
     command_lower = command.lower()
 
@@ -158,7 +159,7 @@ def validate_command(command: str) -> Dict[str, Any]:
     return {"valid": True}
 
 
-def validate_url(url: str) -> Dict[str, Any]:
+def validate_url(url: str) -> dict[str, Any]:
     """验证 URL 安全性"""
     try:
         parsed = urlparse(url)
@@ -179,14 +180,14 @@ def validate_url(url: str) -> Dict[str, Any]:
 
         return {"valid": True}
     except Exception as e:
-        return {"valid": False, "error": LobsterError(ErrorCode.URL_INVALID, f"无效 URL: {str(e)}")}
+        return {"valid": False, "error": LobsterError(ErrorCode.URL_INVALID, f"无效 URL: {e!s}")}
 
 
 class ToolRegistry:
     """工具注册表"""
 
     def __init__(self):
-        self._tools: Dict[str, Tool] = {}
+        self._tools: dict[str, Tool] = {}
         self._register_builtin_tools()
 
     def _register_builtin_tools(self):
@@ -517,7 +518,7 @@ class ToolRegistry:
         """获取工具"""
         return self._tools.get(name)
 
-    def list_all(self) -> List[Dict[str, Any]]:
+    def list_all(self) -> list[dict[str, Any]]:
         """列出所有工具"""
         return [
             {
@@ -529,7 +530,7 @@ class ToolRegistry:
             for tool in self._tools.values()
         ]
 
-    def list_by_category(self, category: str) -> List[Dict[str, Any]]:
+    def list_by_category(self, category: str) -> list[dict[str, Any]]:
         """按类别列出工具"""
         return [
             {
@@ -541,7 +542,7 @@ class ToolRegistry:
             if tool.category == category
         ]
 
-    def get_openai_tools(self) -> List[Dict[str, Any]]:
+    def get_openai_tools(self) -> list[dict[str, Any]]:
         """获取 OpenAI Function Calling 格式的工具列表"""
         return [
             {
@@ -555,7 +556,7 @@ class ToolRegistry:
             for tool in self._tools.values()
         ]
 
-    def execute(self, name: str, use_cache: bool = True, **kwargs) -> Dict[str, Any]:
+    def execute(self, name: str, use_cache: bool = True, **kwargs) -> dict[str, Any]:
         """执行工具
 
         Args:
@@ -624,7 +625,7 @@ class ToolRegistry:
             )
 
     # ==================== 文件操作处理器 ====================
-    def _handle_file_read(self, path: str, encoding: str = "utf-8") -> Dict[str, Any]:
+    def _handle_file_read(self, path: str, encoding: str = "utf-8") -> dict[str, Any]:
         """读取文件"""
         validation = validate_path(path)
         if not validation["valid"]:
@@ -651,12 +652,12 @@ class ToolRegistry:
             }
         except UnicodeDecodeError as e:
             return {
-                "error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {str(e)}").message
+                "error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {e!s}").message
             }
         except Exception as e:
             return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, str(e)).message}
 
-    def _handle_file_write(self, path: str, content: str, mode: str = "write") -> Dict[str, Any]:
+    def _handle_file_write(self, path: str, content: str, mode: str = "write") -> dict[str, Any]:
         """写入文件"""
         if len(content) > security_config.max_content_size:
             return {
@@ -684,7 +685,7 @@ class ToolRegistry:
         except Exception as e:
             return {"error": LobsterError(ErrorCode.FILE_WRITE_ERROR, str(e)).message}
 
-    def _handle_file_list(self, path: str = ".", pattern: str = "*") -> Dict[str, Any]:
+    def _handle_file_list(self, path: str = ".", pattern: str = "*") -> dict[str, Any]:
         """列出目录内容"""
         dir_path = Path(path)
 
@@ -704,7 +705,7 @@ class ToolRegistry:
 
         return {"files": files, "count": len(files)}
 
-    def _handle_file_delete(self, path: str) -> Dict[str, Any]:
+    def _handle_file_delete(self, path: str) -> dict[str, Any]:
         """删除文件"""
         file_path = Path(path)
 
@@ -721,9 +722,9 @@ class ToolRegistry:
     def _handle_http_get(
         self,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         timeout: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """发送 GET 请求"""
         validation = validate_url(url)
         if not validation["valid"]:
@@ -747,10 +748,10 @@ class ToolRegistry:
     def _handle_http_post(
         self,
         url: str,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         timeout: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """发送 POST 请求"""
         validation = validate_url(url)
         if not validation["valid"]:
@@ -771,7 +772,7 @@ class ToolRegistry:
         except Exception as e:
             return {"error": LobsterError(ErrorCode.REQUEST_FAILED, str(e)).message}
 
-    def _handle_web_search(self, query: str, limit: int = 5) -> Dict[str, Any]:
+    def _handle_web_search(self, query: str, limit: int = 5) -> dict[str, Any]:
         """网络搜索"""
         return {
             "results": [],
@@ -779,7 +780,7 @@ class ToolRegistry:
         }
 
     # ==================== 代码执行处理器 ====================
-    def _handle_run_python(self, code: str, timeout: int = 30) -> Dict[str, Any]:
+    def _handle_run_python(self, code: str, timeout: int = 30) -> dict[str, Any]:
         """执行 Python 代码"""
         dangerous_imports = ["os.system", "subprocess", "eval(", "exec(", "__import__"]
         for dangerous in dangerous_imports:
@@ -809,7 +810,7 @@ class ToolRegistry:
         except Exception as e:
             return {"error": LobsterError(ErrorCode.CODE_ERROR, str(e)).message}
 
-    def _handle_run_shell(self, command: str, timeout: int = 30) -> Dict[str, Any]:
+    def _handle_run_shell(self, command: str, timeout: int = 30) -> dict[str, Any]:
         """执行 Shell 命令"""
         validation = validate_command(command)
         if not validation["valid"]:
@@ -833,7 +834,7 @@ class ToolRegistry:
             return {"error": LobsterError(ErrorCode.COMMAND_FAILED, str(e)).message}
 
     # ==================== 系统交互处理器 ====================
-    def _handle_notify(self, message: str, title: str = "OpenClaw") -> Dict[str, Any]:
+    def _handle_notify(self, message: str, title: str = "OpenClaw") -> dict[str, Any]:
         """发送通知"""
         import sys
 
@@ -854,7 +855,7 @@ class ToolRegistry:
         except Exception as e:
             return {"error": str(e)}
 
-    def _handle_clipboard(self, action: str, content: str = None) -> Dict[str, Any]:
+    def _handle_clipboard(self, action: str, content: str | None = None) -> dict[str, Any]:
         """操作剪贴板"""
         import subprocess
 
@@ -878,7 +879,7 @@ class ToolRegistry:
             return {"error": str(e)}
 
     # ==================== 数据处理处理器 ====================
-    def _handle_json_parse(self, data: str, path: Optional[str] = None) -> Dict[str, Any]:
+    def _handle_json_parse(self, data: str, path: str | None = None) -> dict[str, Any]:
         """解析 JSON"""
 
         try:
@@ -886,24 +887,21 @@ class ToolRegistry:
 
             if path:
                 for key in path.split("."):
-                    if key.isdigit():
-                        parsed = parsed[int(key)]
-                    else:
-                        parsed = parsed[key]
+                    parsed = parsed[int(key)] if key.isdigit() else parsed[key]
 
             return {"data": parsed}
         except json.JSONDecodeError as e:
             return {
                 "error": LobsterError(
-                    ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {str(e)}"
+                    ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {e!s}"
                 ).message
             }
         except (KeyError, IndexError) as e:
             return {
-                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {str(e)}").message
+                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {e!s}").message
             }
 
-    def _handle_text_process(self, text: str, operation: str) -> Dict[str, Any]:
+    def _handle_text_process(self, text: str, operation: str) -> dict[str, Any]:
         """文本处理"""
         operations = {
             "uppercase": text.upper(),
@@ -927,7 +925,7 @@ class ToolRegistry:
 
         return {"result": operations[operation]}
 
-    def _handle_calculate(self, expression: str) -> Dict[str, Any]:
+    def _handle_calculate(self, expression: str) -> dict[str, Any]:
         """数学计算"""
         import ast
         import operator
@@ -956,7 +954,7 @@ class ToolRegistry:
             result = eval_expr(tree.body)
             return {"expression": expression, "result": result}
         except Exception as e:
-            return {"error": LobsterError(ErrorCode.CALCULATE_ERROR, f"计算错误: {str(e)}").message}
+            return {"error": LobsterError(ErrorCode.CALCULATE_ERROR, f"计算错误: {e!s}").message}
 
 
 registry = ToolRegistry()

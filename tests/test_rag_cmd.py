@@ -13,7 +13,7 @@ from click.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from lobster.commands.rag_cmd import rag, status, ask
+from lobster.commands.rag_cmd import ask, rag, status
 
 
 class TestRAGGroup:
@@ -138,4 +138,4 @@ class TestRAGAPIURL:
         """测试默认 API URL"""
         from lobster.commands.rag_cmd import RAG_API_URL
 
-        assert RAG_API_URL == os.environ.get("RAG_API_URL", "http://localhost:8000")
+        assert os.environ.get("RAG_API_URL", "http://localhost:8000") == RAG_API_URL

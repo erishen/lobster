@@ -1,15 +1,16 @@
 """项目管理工具命令模块"""
 
+import json
+from datetime import datetime
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from pathlib import Path
-from datetime import datetime
-import json
 
-from lobster.core.llm_client import get_llm_client
 from lobster.core.config import ConfigManager
+from lobster.core.llm_client import get_llm_client
 
 console = Console()
 
@@ -236,7 +237,7 @@ def report(path, model):
     for file_path in project_path.rglob("*"):
         if file_path.is_file() and file_path.suffix in [".py", ".js", ".ts", ".go", ".rs", ".java"]:
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     code_lines += len(f.readlines())
             except (OSError, UnicodeDecodeError):
                 continue
@@ -280,7 +281,7 @@ def todo(path):
     todo_file = project_path / ".lobster_todo.json"
 
     if todo_file.exists():
-        with open(todo_file, "r", encoding="utf-8") as f:
+        with open(todo_file, encoding="utf-8") as f:
             todos = json.load(f)
     else:
         todos = []
@@ -321,7 +322,7 @@ def add_todo(content, priority, path):
     todo_file = project_path / ".lobster_todo.json"
 
     if todo_file.exists():
-        with open(todo_file, "r", encoding="utf-8") as f:
+        with open(todo_file, encoding="utf-8") as f:
             todos = json.load(f)
     else:
         todos = []
@@ -361,7 +362,7 @@ def done_todo(todo_id, path):
         console.print("\n❌ [bold red]没有待办事项[/bold red]\n")
         return
 
-    with open(todo_file, "r", encoding="utf-8") as f:
+    with open(todo_file, encoding="utf-8") as f:
         todos = json.load(f)
 
     if 1 <= todo_id <= len(todos):
