@@ -6,7 +6,7 @@ authors = [
     {name = "OpenClaw Team"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.11,<3.14"
 license = {text = "MIT"}
 keywords = ["lobster", "openclaw", "cli", "assistant", "ai"]
 classifiers = [
@@ -17,7 +17,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "investkit-utils",
@@ -84,7 +83,7 @@ packages = ["src/lobster"]
 
 [tool.black]
 line-length = 100
-target-version = ['py311', 'py312']
+target-version = ['py311', 'py312', 'py313']
 
 [tool.mypy]
 python_version = "3.11"
@@ -106,3 +105,8 @@ ignore = ["S101", "RUF001", "RUF002", "RUF003", "PERF203", "PERF401", "RUF012", 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.uv.sources]
+investkit-utils = { workspace = true }
+
+
