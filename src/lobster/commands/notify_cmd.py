@@ -121,14 +121,14 @@ def beep(sound):
             if sound:
                 subprocess.run(["say", "beep"], capture_output=True)
             else:
-                print("\a")
+                console.print("\a")
             console.print("✅ [green]提示音已播放[/]")
         except Exception:
             console.print("\a")
             console.print("✅ [green]提示音已播放[/]")
 
     elif sys.platform == "linux":
-        print("\a")
+        console.print("\a")
         console.print("✅ [green]提示音已播放[/]")
 
     elif sys.platform == "win32":
