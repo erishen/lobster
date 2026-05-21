@@ -892,14 +892,10 @@ class ToolRegistry:
             return {"data": parsed}
         except json.JSONDecodeError as e:
             return {
-                "error": LobsterError(
-                    ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {e!s}"
-                ).message
+                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {e!s}").message
             }
         except (KeyError, IndexError) as e:
-            return {
-                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {e!s}").message
-            }
+            return {"error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {e!s}").message}
 
     def _handle_text_process(self, text: str, operation: str) -> dict[str, Any]:
         """文本处理"""
