@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 def test_doctor_check():
     """Test system check"""
     from click.testing import CliRunner
-
     from lobster.commands.doctor import check
 
     # Mock successful Ollama response
@@ -27,7 +26,6 @@ def test_doctor_check():
 def test_doctor_info():
     """Test system information"""
     from click.testing import CliRunner
-
     from lobster.commands.doctor import info
 
     runner = CliRunner()
@@ -42,7 +40,6 @@ def test_doctor_info():
 def test_doctor_fix():
     """Test fixing common issues"""
     from click.testing import CliRunner
-
     from lobster.commands.doctor import fix
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -60,7 +57,6 @@ def test_doctor_fix():
 def test_doctor_deps():
     """Test showing dependencies"""
     from click.testing import CliRunner
-
     from lobster.commands.doctor import deps
 
     runner = CliRunner()

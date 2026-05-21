@@ -2,7 +2,6 @@
 
 import pytest
 from click.testing import CliRunner
-
 from lobster.commands.api_cmd import api
 
 

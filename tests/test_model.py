@@ -8,7 +8,6 @@ import requests
 def test_model_list_success():
     """Test listing models successfully"""
     from click.testing import CliRunner
-
     from lobster.commands.model import list
 
     mock_response = Mock()
@@ -35,7 +34,6 @@ def test_model_list_success():
 def test_model_list_no_models():
     """Test listing models when none installed"""
     from click.testing import CliRunner
-
     from lobster.commands.model import list
 
     mock_response = Mock()
@@ -53,7 +51,6 @@ def test_model_list_no_models():
 def test_model_list_connection_error():
     """Test listing models with connection error"""
     from click.testing import CliRunner
-
     from lobster.commands.model import list
 
     with patch("requests.get", side_effect=requests.exceptions.ConnectionError()):
@@ -67,7 +64,6 @@ def test_model_list_connection_error():
 def test_model_popular():
     """Test showing popular models"""
     from click.testing import CliRunner
-
     from lobster.commands.model import popular
 
     runner = CliRunner()
@@ -82,7 +78,6 @@ def test_model_popular():
 def test_model_info_success():
     """Test getting model info successfully"""
     from click.testing import CliRunner
-
     from lobster.commands.model import info
 
     mock_response = Mock()
@@ -104,7 +99,6 @@ def test_model_info_success():
 def test_model_info_not_found():
     """Test getting info for non-existent model"""
     from click.testing import CliRunner
-
     from lobster.commands.model import info
 
     mock_response = Mock()
@@ -121,7 +115,6 @@ def test_model_info_not_found():
 def test_model_ps_no_models():
     """Test showing running models when none running"""
     from click.testing import CliRunner
-
     from lobster.commands.model import ps
 
     mock_response = Mock()
