@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
-
 from lobster.commands.notify_cmd import notify
 
 

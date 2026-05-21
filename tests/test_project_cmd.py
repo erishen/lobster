@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
-
 from lobster.commands.project_cmd import project
 
 

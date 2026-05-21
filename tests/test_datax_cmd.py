@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from lobster.commands.datax_cmd import datax
 
 
