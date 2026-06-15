@@ -1,5 +1,7 @@
 """文档工具命令模块"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.markdown import Markdown
@@ -7,6 +9,8 @@ from rich.panel import Panel
 
 from lobster.core.config import ConfigManager
 from lobster.core.llm_client import get_llm_client
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -54,7 +58,7 @@ def summarize(file_path, model, length):
     with console.status("[bold green]总结中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]文档总结:[/bold green]\n{result}\n")
+    logger.info(f"\n 文档总结:\n{result}\n")
 
 
 @doc_tool.command()
@@ -99,7 +103,7 @@ def translate(file_path, target_language, model):
     with console.status("[bold green]翻译中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print("\n💡 [bold green]翻译结果:[/bold green]\n")
+    logger.info("\n 翻译结果:\n")
     console.print(Markdown(result))
 
 
@@ -143,9 +147,9 @@ def rewrite(file_path, model, output):
     if output:
         with open(output, "w") as f:
             f.write(result)
-        console.print(f"\n✅ [bold green]已保存到: {output}[/bold green]\n")
+        logger.info(f"\n 已保存到: {output}\n")
     else:
-        console.print("\n💡 [bold green]改写结果:[/bold green]\n")
+        logger.info("\n 改写结果:\n")
         console.print(Markdown(result))
 
 
@@ -184,7 +188,7 @@ def outline(file_path, model):
     with console.status("[bold green]生成大纲中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print("\n💡 [bold green]文档大纲:[/bold green]\n")
+    logger.info("\n 文档大纲:\n")
     console.print(Markdown(result))
 
 
@@ -222,7 +226,7 @@ def keywords(file_path, model):
     with console.status("[bold green]提取关键词中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]关键词:[/bold green]\n{result}\n")
+    logger.info(f"\n 关键词:\n{result}\n")
 
 
 @doc_tool.command()
@@ -264,7 +268,7 @@ A: 答案
     with console.status("[bold green]生成问答对中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]问答对:[/bold green]\n{result}\n")
+    logger.info(f"\n 问答对:\n{result}\n")
 
 
 @doc_tool.command()
@@ -304,8 +308,8 @@ def slides(file_path, model, format):
     with console.status("[bold green]生成幻灯片中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print("\n💡 [bold green]幻灯片内容:[/bold green]\n")
+    logger.info("\n 幻灯片内容:\n")
     if format == "markdown":
         console.print(Markdown(result))
     else:
-        console.print(result)
+        logger.info(result)

@@ -1,12 +1,15 @@
 """Webhook 命令模块"""
 
 import json
+import logging
 from pathlib import Path
 
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -54,10 +57,10 @@ def add(name, url, method, event, header):
     hooks[name] = hook
     _save_webhooks(hooks)
 
-    console.print(f"✅ [green]Webhook 已添加:[/] {name}")
-    console.print(f"   URL: {url}")
-    console.print(f"   方法: {method}")
-    console.print(f"   事件: {event}")
+    logger.info(f" Webhook 已添加: {name}")
+    logger.info(f" URL: {url}")
+    logger.info(f" 方法: {method}")
+    logger.info(f" 事件: {event}")
 
 
 @webhook.command()
@@ -68,7 +71,7 @@ def list():
     hooks = _load_webhooks()
 
     if not hooks:
-        console.print("[yellow]没有 Webhook[/]")
+        logger.info("没有 Webhook")
         return
 
     table = Table()
@@ -98,11 +101,11 @@ def test(name):
     hooks = _load_webhooks()
 
     if name not in hooks:
-        console.print(f"[red]Webhook 不存在: {name}[/]")
+        logger.error(f"Webhook 不存在: {name}")
         return
 
     hook = hooks[name]
-    console.print(f"🧪 [bold]测试 Webhook: {name}[/]")
+    logger.info(f" 测试 Webhook: {name}")
 
     try:
         import requests
@@ -122,14 +125,20 @@ def test(name):
         )
 
         if response.status_code < 400:
-            console.print(f"✅ [green]请求成功 (状态码: {response.status_code})[/]")
+            logger.info(f" 请求成功 (状态码: {response.status_code})")
         else:
-            console.print(f"❌ [red]请求失败 (状态码: {response.status_code})[/]")
+            logger.error(f" 请求失败 (状态码: {response.status_code})")
 
     except ImportError:
-        console.print("[red]Error: requests 库未安装[/]")
+        logger.error("Error: requests 库未安装")
+    except requests.RequestException as e:
+        logger.error(f" 测试失败: {e!s}")
+
+    except KeyError as e:
+        logger.error(f" 测试失败: {e!s}")
+
     except Exception as e:
-        console.print(f"❌ [red]测试失败: {e!s}[/]")
+        logger.error(f" 测试失败: {e!s}")
 
 
 @webhook.command()
@@ -139,13 +148,13 @@ def remove(name):
     hooks = _load_webhooks()
 
     if name not in hooks:
-        console.print(f"[red]Webhook 不存在: {name}[/]")
+        logger.error(f"Webhook 不存在: {name}")
         return
 
     del hooks[name]
     _save_webhooks(hooks)
 
-    console.print(f"✅ [green]Webhook 已删除: {name}[/]")
+    logger.info(f" Webhook 已删除: {name}")
 
 
 @webhook.command()
@@ -158,7 +167,7 @@ def trigger(event, data):
         lobster webhook trigger message
         lobster webhook trigger backup --data '{"key": "value"}'
     """
-    console.print(f"🔔 [bold]触发事件: {event}[/]")
+    logger.info(f" 触发事件: {event}")
 
     hooks = _load_webhooks()
     triggered = []
@@ -190,15 +199,24 @@ def trigger(event, data):
             )
 
             if response.status_code < 400:
-                console.print(f"✅ {name}: 成功")
+                logger.info(f" {name}: 成功")
                 triggered.append(name)
             else:
-                console.print(f"❌ {name}: 失败 ({response.status_code})")
+                logger.error(f" {name}: 失败 ({response.status_code})")
+
+        except requests.RequestException as e:
+            logger.error(f" {name}: 错误 - {e!s}")
+
+        except ValueError as e:
+            logger.error(f" {name}: 错误 - {e!s}")
+
+        except KeyError as e:
+            logger.error(f" {name}: 错误 - {e!s}")
 
         except Exception as e:
-            console.print(f"❌ {name}: 错误 - {e!s}")
+            logger.error(f" {name}: 错误 - {e!s}")
 
-    console.print(f"\n触发 {len(triggered)}/{len(hooks)} Webhooks")
+    logger.info(f"\n触发 {len(triggered)}/{len(hooks)} Webhooks")
 
 
 def _load_webhooks() -> dict:

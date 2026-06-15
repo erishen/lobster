@@ -1,13 +1,17 @@
 """Conversation history management commands"""
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 import click
+import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -19,8 +23,8 @@ def ensure_history_dir():
     try:
         HISTORY_DIR.mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        console.print("[red]Error:[/] Permission denied creating history directory")
-        console.print(f"[yellow]Please check permissions for:[/] {HISTORY_DIR}")
+        logger.error("Error: Permission denied creating history directory")
+        logger.info(f"Please check permissions for: {HISTORY_DIR}")
         raise
 
 
@@ -69,6 +73,9 @@ def list_conversations():
                         else "",
                     }
                 )
+        except requests.RequestException:
+            continue
+
         except Exception:
             continue
 
@@ -88,11 +95,11 @@ def list():
         conversations = list_conversations()
 
         if not conversations:
-            console.print("[yellow]No conversation history found[/]")
-            console.print("[dim]Conversations are saved when using interactive chat mode[/]")
+            logger.info("No conversation history found")
+            logger.debug("Conversations are saved when using interactive chat mode")
             return
 
-        console.print(f"[bold blue]Conversation History ({len(conversations)} found)[/]\n")
+        logger.info(f"Conversation History ({len(conversations)} found)\n")
 
         table = Table()
         table.add_column("Index", style="cyan", width=6)
@@ -106,8 +113,11 @@ def list():
 
         console.print(table)
 
+    except KeyError as e:
+        logger.error(f"Error listing conversations: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]Error listing conversations:[/] {e!s}")
+        logger.error(f"Error listing conversations: {e!s}")
 
 
 @history.command()
@@ -118,21 +128,18 @@ def show(index):
         conversations = list_conversations()
 
         if not conversations:
-            console.print("[yellow]No conversation history found[/]")
+            logger.info("No conversation history found")
             return
 
         if index < 1 or index > len(conversations):
-            console.print(
-                "[red]Error:[/] Invalid index. "
-                "Use 'lobster history list' to see available conversations"
-            )
+            console.print("[red]Error:[/] Invalid index. Use 'lobster history list' to see available conversations")
             return
 
         conv = conversations[index - 1]
         data = load_conversation(conv["filename"])
 
         if not data:
-            console.print("[red]Error:[/] Failed to load conversation")
+            logger.error("Error: Failed to load conversation")
             return
 
         console.print(
@@ -150,13 +157,19 @@ def show(index):
             content = msg.get("content", "")
 
             if role == "user":
-                console.print(f"[bold blue]You:[/] {content}")
+                logger.info(f"You: {content}")
             else:
-                console.print(f"[bold green]Assistant:[/] {content}")
+                logger.info(f"Assistant: {content}")
             console.print()
 
+    except requests.RequestException as e:
+        logger.error(f"Error showing conversation: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error showing conversation: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]Error showing conversation:[/] {e!s}")
+        logger.error(f"Error showing conversation: {e!s}")
 
 
 @history.command()
@@ -167,11 +180,11 @@ def delete(index):
         conversations = list_conversations()
 
         if not conversations:
-            console.print("[yellow]No conversation history found[/]")
+            logger.info("No conversation history found")
             return
 
         if index < 1 or index > len(conversations):
-            console.print("[red]Error:[/] Invalid index")
+            logger.error("Error: Invalid index")
             return
 
         conv = conversations[index - 1]
@@ -179,13 +192,19 @@ def delete(index):
 
         if filepath.exists():
             filepath.unlink()
-            console.print("[green]✓[/] Conversation deleted successfully")
-            console.print(f"[dim]File: {conv['filename']}[/]")
+            logger.info(" Conversation deleted successfully")
+            logger.debug(f"File: {conv['filename']}")
         else:
-            console.print("[red]Error:[/] Conversation file not found")
+            logger.error("Error: Conversation file not found")
+
+    except KeyError as e:
+        logger.error(f"Error deleting conversation: {e!s}")
+
+    except OSError as e:
+        logger.error(f"Error deleting conversation: {e!s}")
 
     except Exception as e:
-        console.print(f"[red]Error deleting conversation:[/] {e!s}")
+        logger.error(f"Error deleting conversation: {e!s}")
 
 
 @history.command()
@@ -197,18 +216,18 @@ def export(index, output):
         conversations = list_conversations()
 
         if not conversations:
-            console.print("[yellow]No conversation history found[/]")
+            logger.info("No conversation history found")
             return
 
         if index < 1 or index > len(conversations):
-            console.print("[red]Error:[/] Invalid index")
+            logger.error("Error: Invalid index")
             return
 
         conv = conversations[index - 1]
         data = load_conversation(conv["filename"])
 
         if not data:
-            console.print("[red]Error:[/] Failed to load conversation")
+            logger.error("Error: Failed to load conversation")
             return
 
         markdown_lines = [
@@ -240,11 +259,20 @@ def export(index, output):
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(markdown_lines))
 
-        console.print("[green]✓[/] Conversation exported successfully")
-        console.print(f"[dim]File: {output_path}[/]")
+        logger.info(" Conversation exported successfully")
+        logger.debug(f"File: {output_path}")
+
+    except requests.RequestException as e:
+        logger.error(f"Error exporting conversation: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error exporting conversation: {e!s}")
+
+    except OSError as e:
+        logger.error(f"Error exporting conversation: {e!s}")
 
     except Exception as e:
-        console.print(f"[red]Error exporting conversation:[/] {e!s}")
+        logger.error(f"Error exporting conversation: {e!s}")
 
 
 @history.command()
@@ -253,14 +281,14 @@ def clear():
     """Clear all conversation history"""
     try:
         if not HISTORY_DIR.exists():
-            console.print("[yellow]No conversation history found[/]")
+            logger.info("No conversation history found")
             return
 
         import shutil
 
         shutil.rmtree(HISTORY_DIR)
 
-        console.print("[green]✓[/] All conversation history cleared successfully")
+        logger.info(" All conversation history cleared successfully")
 
     except Exception as e:
-        console.print(f"[red]Error clearing history:[/] {e!s}")
+        logger.error(f"Error clearing history: {e!s}")

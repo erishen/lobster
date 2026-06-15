@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Lobster - OpenClaw Assistant CLI Tool"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
+
+logger = logging.getLogger(__name__)
 
 VERSION = "0.1.0"
 console = Console()
@@ -22,14 +26,14 @@ def cli():
 @cli.command()
 def version():
     """Show version information"""
-    console.print(f"[bold cyan]Lobster CLI[/] version [green]{VERSION}[/]")
+    logger.info(f"Lobster CLI version {VERSION}")
 
 
 @cli.command()
 def status():
     """Check the status of the OpenClaw service"""
-    console.print("[bold blue]Checking OpenClaw service status...[/]")
-    console.print("[green]✓[/] Service is running (mock status)")
+    logger.info("Checking OpenClaw service status...")
+    logger.info(" Service is running (mock status)")
 
 
 @cli.command()
@@ -76,13 +80,13 @@ def chat(message, model, interactive, with_memory):
                             "messages": conversation_messages,
                         }
                         filename = save_conversation(conversation_data)
-                        console.print(f"[dim]Conversation saved: {filename}[/]")
-                    console.print("[yellow]Goodbye! 👋[/]")
+                        logger.debug(f"Conversation saved: {filename}")
+                    logger.info("Goodbye! ")
                     break
 
                 if user_input.lower() == "clear":
                     conversation_messages = []
-                    console.print("[green]Conversation history cleared[/]")
+                    logger.info("Conversation history cleared")
                     continue
 
                 if not user_input.strip():
@@ -101,6 +105,9 @@ def chat(message, model, interactive, with_memory):
                             for i, mem in enumerate(memories, 1):
                                 memory_context += f"{i}. {mem['content']}\n"
                             memory_context += "\n"
+                    except KeyError:
+                        pass
+
                     except Exception:
                         pass
 
@@ -113,7 +120,7 @@ def chat(message, model, interactive, with_memory):
 
                 conversation_messages.append({"role": "assistant", "content": response})
 
-                console.print(f"[bold green]Assistant:[/] {response}\n")
+                logger.info(f"Assistant: {response}\n")
 
             except KeyboardInterrupt:
                 if conversation_messages:
@@ -127,25 +134,29 @@ def chat(message, model, interactive, with_memory):
                         "messages": conversation_messages,
                     }
                     filename = save_conversation(conversation_data)
-                    console.print(f"[dim]Conversation saved: {filename}[/]")
-                console.print("\n[yellow]Goodbye! 👋[/]")
+                    logger.debug(f"Conversation saved: {filename}")
+                logger.info("\nGoodbye! ")
                 break
+            except KeyError as e:
+                logger.error(f"Error: {e!s}")
+                continue
+
             except Exception as e:
-                console.print(f"[red]Error:[/] {e!s}")
+                logger.error(f"Error: {e!s}")
                 continue
 
     else:
         if not message:
-            console.print("[red]Error:[/] Message is required in non-interactive mode")
-            console.print("[yellow]Use --interactive for interactive mode[/]")
+            logger.error("Error: Message is required in non-interactive mode")
+            logger.info("Use --interactive for interactive mode")
             return
 
-        console.print(f"[bold blue]Sending message to OpenClaw:[/] {message}")
+        logger.info(f"Sending message to OpenClaw: {message}")
 
         with console.status("[bold green]Thinking..."):
             response = llm.generate(message)
 
-        console.print(f"[bold green]Assistant response:[/] {response}")
+        logger.info(f"Assistant response: {response}")
 
 
 @cli.command()
@@ -161,14 +172,14 @@ def web(port, host):
         web_app_path = Path(__file__).parent / "web" / "app.py"
 
         if not web_app_path.exists():
-            console.print("[red]Error:[/] Web UI module not found")
-            console.print("[yellow]Install with:[/] pip install lobster[web]")
+            logger.error("Error: Web UI module not found")
+            logger.info("Install with: pip install lobster")
             return
 
-        console.print("[bold blue]Starting Lobster Web UI...[/]")
-        console.print(f"[dim]Host: {host}, Port: {port}[/]")
-        console.print(f"[dim]Access at: http://{host}:{port}[/]")
-        console.print("[dim]Press Ctrl+C to stop[/]")
+        logger.info("Starting Lobster Web UI...")
+        logger.debug(f"Host: {host}, Port: {port}")
+        logger.debug(f"Access at: http://{host}:{port}")
+        logger.debug("Press Ctrl+C to stop")
 
         subprocess.run(
             [
@@ -186,12 +197,12 @@ def web(port, host):
         )
 
     except ImportError:
-        console.print("[red]Error:[/] Streamlit not installed")
-        console.print("[yellow]Install with:[/] pip install lobster[web]")
+        logger.error("Error: Streamlit not installed")
+        logger.info("Install with: pip install lobster")
     except KeyboardInterrupt:
-        console.print("\n[yellow]Web UI stopped[/]")
+        logger.info("\nWeb UI stopped")
     except Exception as e:
-        console.print(f"[red]Error starting Web UI:[/] {e!s}")
+        logger.error(f"Error starting Web UI: {e!s}")
 
 
 # 导入核心命令

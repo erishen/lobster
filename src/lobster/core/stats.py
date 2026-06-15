@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import requests
+
 STATS_DIR = Path.home() / ".lobster" / "stats"
 STATS_DIR.mkdir(parents=True, exist_ok=True)
 STATS_FILE = STATS_DIR / "tool_stats.json"
@@ -65,13 +67,9 @@ class ToolStats:
             "success_rate": f"{self.success_rate:.1f}%",
             "total_duration_ms": round(self.total_duration_ms, 2),
             "avg_duration_ms": round(self.avg_duration_ms, 2),
-            "min_duration_ms": round(self.min_duration_ms, 2)
-            if self.min_duration_ms != float("inf")
-            else 0,
+            "min_duration_ms": round(self.min_duration_ms, 2) if self.min_duration_ms != float("inf") else 0,
             "max_duration_ms": round(self.max_duration_ms, 2),
-            "last_called": datetime.fromtimestamp(self.last_called).isoformat()
-            if self.last_called
-            else None,
+            "last_called": datetime.fromtimestamp(self.last_called).isoformat() if self.last_called else None,
             "errors": self.errors,
         }
 
@@ -112,6 +110,15 @@ class ToolStatsTracker:
                         stats.last_called = stats_data.get("last_called")
                         stats.errors = stats_data.get("errors", {})
                         self._stats[tool_name] = stats
+            except requests.RequestException:
+                pass
+
+            except ValueError:
+                pass
+
+            except OSError:
+                pass
+
             except Exception:
                 pass
 
@@ -124,6 +131,9 @@ class ToolStatsTracker:
             }
             with open(STATS_FILE, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+        except OSError:
+            pass
+
         except Exception:
             pass
 

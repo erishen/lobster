@@ -29,9 +29,7 @@ def load_env_file(env_path: Path | None = None) -> dict:
                 key, value = line.split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                if (value.startswith('"') and value.endswith('"')) or (
-                    value.startswith("'") and value.endswith("'")
-                ):
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                     value = value[1:-1]
                 env_vars[key] = value
 

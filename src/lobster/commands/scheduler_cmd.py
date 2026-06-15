@@ -1,13 +1,17 @@
 """定时任务命令模块"""
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 import click
+import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -51,12 +55,12 @@ def add(name, command, interval, cron, enabled):
     tasks[name] = task
     _save_tasks(tasks)
 
-    console.print(f"✅ [green]任务已添加:[/] {name}")
-    console.print(f"   命令: {command}")
+    logger.info(f" 任务已添加: {name}")
+    logger.info(f" 命令: {command}")
     if cron:
-        console.print(f"   Cron: {cron}")
+        logger.info(f" Cron: {cron}")
     else:
-        console.print(f"   间隔: {interval} 秒")
+        logger.info(f" 间隔: {interval} 秒")
 
 
 @scheduler.command()
@@ -67,7 +71,7 @@ def list():
     tasks = _load_tasks()
 
     if not tasks:
-        console.print("[yellow]没有定时任务[/]")
+        logger.info("没有定时任务")
         return
 
     table = Table()
@@ -94,13 +98,13 @@ def enable(name):
     tasks = _load_tasks()
 
     if name not in tasks:
-        console.print(f"[red]任务不存在: {name}[/]")
+        logger.error(f"任务不存在: {name}")
         return
 
     tasks[name]["enabled"] = True
     _save_tasks(tasks)
 
-    console.print(f"✅ [green]任务已启用: {name}[/]")
+    logger.info(f" 任务已启用: {name}")
 
 
 @scheduler.command()
@@ -110,13 +114,13 @@ def disable(name):
     tasks = _load_tasks()
 
     if name not in tasks:
-        console.print(f"[red]任务不存在: {name}[/]")
+        logger.error(f"任务不存在: {name}")
         return
 
     tasks[name]["enabled"] = False
     _save_tasks(tasks)
 
-    console.print(f"✅ [green]任务已禁用: {name}[/]")
+    logger.info(f" 任务已禁用: {name}")
 
 
 @scheduler.command()
@@ -126,13 +130,13 @@ def remove(name):
     tasks = _load_tasks()
 
     if name not in tasks:
-        console.print(f"[red]任务不存在: {name}[/]")
+        logger.error(f"任务不存在: {name}")
         return
 
     del tasks[name]
     _save_tasks(tasks)
 
-    console.print(f"✅ [green]任务已删除: {name}[/]")
+    logger.info(f" 任务已删除: {name}")
 
 
 @scheduler.command()
@@ -144,10 +148,10 @@ def run():
     enabled_tasks = [t for t in tasks.values() if t.get("enabled")]
 
     if not enabled_tasks:
-        console.print("[yellow]没有启用的定时任务[/]")
+        logger.info("没有启用的定时任务")
         return
 
-    console.print(f"将运行 {len(enabled_tasks)} 个任务 (按 Ctrl+C 停止)...")
+    logger.info(f"将运行 {len(enabled_tasks)} 个任务 (按 Ctrl+C 停止)...")
 
     try:
         import time
@@ -159,7 +163,7 @@ def run():
             time.sleep(5)
 
     except KeyboardInterrupt:
-        console.print("\n[yellow]调度器已停止[/]")
+        logger.info("\n调度器已停止")
 
 
 def _load_tasks() -> dict:
@@ -180,7 +184,7 @@ def _run_task(task: dict):
     """执行任务"""
     import subprocess
 
-    console.print(f"\n▶️ 运行任务: {task['name']}")
+    logger.info(f"\n▶️ 运行任务: {task['name']}")
 
     try:
         result = subprocess.run(
@@ -196,12 +200,18 @@ def _run_task(task: dict):
         _save_tasks(_load_tasks())
 
         if result.returncode == 0:
-            console.print(f"✅ 任务完成: {task['name']}")
+            logger.info(f" 任务完成: {task['name']}")
         else:
-            console.print(f"❌ 任务失败: {result.stderr}")
+            logger.error(f" 任务失败: {result.stderr}")
+
+    except requests.RequestException as e:
+        logger.error(f" 执行错误: {e!s}")
+
+    except KeyError as e:
+        logger.error(f" 执行错误: {e!s}")
 
     except Exception as e:
-        console.print(f"❌ 执行错误: {e!s}")
+        logger.error(f" 执行错误: {e!s}")
 
 
 if __name__ == "__main__":

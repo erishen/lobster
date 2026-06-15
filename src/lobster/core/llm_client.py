@@ -2,12 +2,15 @@
 
 import hashlib
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import litellm
 from rich.console import Console
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -94,6 +97,12 @@ class ResponseCache:
                 return None
 
             return cache_data["response"]
+
+        except KeyError:
+            return None
+
+        except OSError:
+            return None
 
         except Exception:
             return None
@@ -183,7 +192,7 @@ class EnhancedLLMClient:
         if self.enable_cache and use_cache:
             cached = self.cache.get(prompt, self.model, system_prompt=system_prompt)
             if cached:
-                console.print("[dim]使用缓存响应[/]")
+                logger.debug("使用缓存响应")
                 return cached
 
         # 构建消息
@@ -213,11 +222,9 @@ class EnhancedLLMClient:
 
             except Exception as e:
                 if attempt == self.max_retries - 1:
-                    console.print(f"[red]LLM 调用失败（重试 {self.max_retries} 次后）: {e!s}[/]")
+                    logger.error(f"LLM 调用失败（重试 {self.max_retries} 次后）: {e!s}")
                     return f"错误: {e!s}"
-                console.print(
-                    f"[yellow]LLM 调用失败，重试中... ({attempt + 1}/{self.max_retries})[/]"
-                )
+                console.print(f"[yellow]LLM 调用失败，重试中... ({attempt + 1}/{self.max_retries})[/]")
 
     def generate_stream(
         self,
@@ -284,7 +291,7 @@ class EnhancedLLMClient:
             return assistant_message
 
         except Exception as e:
-            console.print(f"[red]对话失败: {e!s}[/]")
+            logger.error(f"对话失败: {e!s}")
             return f"错误: {e!s}"
 
     def batch_generate(
@@ -304,7 +311,7 @@ class EnhancedLLMClient:
         results = []
 
         for i, prompt in enumerate(prompts, 1):
-            console.print(f"[dim]处理 {i}/{len(prompts)}...[/]")
+            logger.debug(f"处理 {i}/{len(prompts)}...")
             result = self.generate(prompt, system_prompt)
             results.append(result)
 

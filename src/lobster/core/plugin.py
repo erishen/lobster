@@ -1,12 +1,15 @@
 """Plugin system for Lobster CLI"""
 
 import importlib.util
+import logging
 import sys
 from pathlib import Path
 from typing import Any
 
 from rich.console import Console
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -55,7 +58,7 @@ class PluginManager:
                     try:
                         self._load_plugin(plugin_dir.name, plugin_file)
                     except Exception as e:
-                        console.print(f"[red]Error loading plugin {plugin_dir.name}:[/] {e!s}")
+                        logger.error(f"Error loading plugin {plugin_dir.name}: {e!s}")
 
     def _load_plugin(self, plugin_name: str, plugin_file: Path):
         """Load a single plugin"""
@@ -106,14 +109,14 @@ def {name}_command():
         with open(plugin_file, "w") as f:
             f.write(plugin_code)
 
-        console.print(f"[green]✓[/] Created plugin template: {name}")
-        console.print(f"[dim]Location: {plugin_dir}[/]")
-        console.print("[dim]Edit the plugin.py file to customize your plugin[/]")
+        logger.info(f" Created plugin template: {name}")
+        logger.debug(f"Location: {plugin_dir}")
+        logger.debug("Edit the plugin.py file to customize your plugin")
 
     def show_plugins(self):
         """Show all loaded plugins"""
         if not self.plugins:
-            console.print("[yellow]No plugins loaded[/]")
+            logger.info("No plugins loaded")
             return
 
         table = Table(title="Loaded Plugins")

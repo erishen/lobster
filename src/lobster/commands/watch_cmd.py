@@ -1,12 +1,15 @@
 """文件监控命令模块"""
 
 import json
+import logging
 from pathlib import Path
 
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -47,10 +50,10 @@ def add(path, command, pattern, recursive):
     watchers[watcher_id] = watcher
     _save_watchers(watchers)
 
-    console.print("✅ [green]监控已添加:[/]")
-    console.print(f"   路径: {path}")
-    console.print(f"   命令: {command}")
-    console.print(f"   模式: {pattern}")
+    logger.info(" 监控已添加:")
+    logger.info(f" 路径: {path}")
+    logger.info(f" 命令: {command}")
+    logger.info(f" 模式: {pattern}")
 
 
 @watch.command()
@@ -61,7 +64,7 @@ def list():
     watchers = _load_watchers()
 
     if not watchers:
-        console.print("[yellow]没有文件监控[/]")
+        logger.info("没有文件监控")
         return
 
     table = Table()
@@ -93,15 +96,15 @@ def start(watcher_id):
     watchers = _load_watchers()
 
     if watcher_id not in watchers:
-        console.print(f"[red]监控不存在: {watcher_id}[/]")
+        logger.error(f"监控不存在: {watcher_id}")
         return
 
     watcher = watchers[watcher_id]
 
-    console.print(f"监控路径: {watcher['path']}")
-    console.print(f"执行命令: {watcher['command']}")
-    console.print(f"模式: {watcher['pattern']}")
-    console.print("\n按 Ctrl+C 停止监控...\n")
+    logger.info(f"监控路径: {watcher['path']}")
+    logger.info(f"执行命令: {watcher['command']}")
+    logger.info(f"模式: {watcher['pattern']}")
+    logger.info("\n按 Ctrl+C 停止监控...\n")
 
     try:
         import time
@@ -135,8 +138,8 @@ def start(watcher_id):
             def run_command(self, file_path, event_type):
                 import subprocess
 
-                console.print(f"\n📝 文件 {event_type}: {file_path}")
-                console.print(f"▶️ 执行: {self.cmd}")
+                logger.info(f"\n 文件 {event_type}: {file_path}")
+                logger.info(f"▶️ 执行: {self.cmd}")
 
                 try:
                     result = subprocess.run(
@@ -148,12 +151,12 @@ def start(watcher_id):
                     )
 
                     if result.returncode == 0:
-                        console.print("✅ 完成")
+                        logger.info(" 完成")
                     else:
-                        console.print(f"❌ 失败: {result.stderr[:100]}")
+                        logger.error(f" 失败: {result.stderr[:100]}")
 
                 except Exception as e:
-                    console.print(f"❌ 错误: {e!s}")
+                    logger.error(f" 错误: {e!s}")
 
         handler = WatchHandler(watcher["command"], watcher["pattern"])
         observer = Observer()
@@ -165,12 +168,12 @@ def start(watcher_id):
             time.sleep(1)
 
     except KeyboardInterrupt:
-        console.print("\n[yellow]监控已停止[/]")
+        logger.info("\n监控已停止")
         observer.stop()
         observer.join()
     except ImportError:
-        console.print("[red]Error: watchdog 库未安装[/]")
-        console.print("[yellow]Install with:[/] pip install watchdog")
+        logger.error("Error: watchdog 库未安装")
+        logger.info("Install with: pip install watchdog")
 
 
 @watch.command()
@@ -180,13 +183,13 @@ def remove(watcher_id):
     watchers = _load_watchers()
 
     if watcher_id not in watchers:
-        console.print(f"[red]监控不存在: {watcher_id}[/]")
+        logger.error(f"监控不存在: {watcher_id}")
         return
 
     del watchers[watcher_id]
     _save_watchers(watchers)
 
-    console.print("✅ [green]监控已删除[/]")
+    logger.info(" 监控已删除")
 
 
 def _load_watchers() -> dict:

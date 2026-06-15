@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from lobster.core.tools import ToolRegistry
 
+import requests
+
 from lobster.core.config import get_config
 
 
@@ -132,6 +134,15 @@ class InvestmentTools:
             self._set_cache(f"stock_{code}", result)
             return result
 
+        except ValueError as e:
+            return {"error": f"获取股票行情失败: {e!s}"}
+
+        except KeyError as e:
+            return {"error": f"获取股票行情失败: {e!s}"}
+
+        except OSError as e:
+            return {"error": f"获取股票行情失败: {e!s}"}
+
         except Exception as e:
             return {"error": f"获取股票行情失败: {e!s}"}
 
@@ -176,6 +187,15 @@ class InvestmentTools:
 
             self._set_cache(f"fund_{code}", result)
             return result
+
+        except requests.RequestException as e:
+            return {"error": f"获取基金净值失败: {e!s}"}
+
+        except ValueError as e:
+            return {"error": f"获取基金净值失败: {e!s}"}
+
+        except OSError as e:
+            return {"error": f"获取基金净值失败: {e!s}"}
 
         except Exception as e:
             return {"error": f"获取基金净值失败: {e!s}"}
@@ -282,6 +302,12 @@ class InvestmentTools:
                 "results": results[:20],
             }
 
+        except KeyError as e:
+            return {"error": f"搜索股票失败: {e!s}"}
+
+        except OSError as e:
+            return {"error": f"搜索股票失败: {e!s}"}
+
         except Exception as e:
             return {"error": f"搜索股票失败: {e!s}"}
 
@@ -326,6 +352,18 @@ class InvestmentTools:
             }
 
             return result
+
+        except requests.RequestException as e:
+            return {"error": f"获取K线数据失败: {e!s}"}
+
+        except ValueError as e:
+            return {"error": f"获取K线数据失败: {e!s}"}
+
+        except KeyError as e:
+            return {"error": f"获取K线数据失败: {e!s}"}
+
+        except OSError as e:
+            return {"error": f"获取K线数据失败: {e!s}"}
 
         except Exception as e:
             return {"error": f"获取K线数据失败: {e!s}"}
@@ -477,9 +515,7 @@ def register_investment_tools(registry: ToolRegistry):
     config = get_config()
     if config.has_tushare:
 
-        def get_tushare_daily(
-            code: str, start_date: str = "", end_date: str = ""
-        ) -> dict[str, Any]:
+        def get_tushare_daily(code: str, start_date: str = "", end_date: str = "") -> dict[str, Any]:
             """获取 Tushare 日线数据"""
             try:
                 import tushare as ts
@@ -500,6 +536,9 @@ def register_investment_tools(registry: ToolRegistry):
 
             except ImportError:
                 return {"error": "tushare 库未安装，请运行: pip install tushare"}
+            except KeyError as e:
+                return {"error": f"Tushare 查询失败: {e!s}"}
+
             except Exception as e:
                 return {"error": f"Tushare 查询失败: {e!s}"}
 
@@ -589,6 +628,18 @@ def register_investment_tools(registry: ToolRegistry):
                     "volume": int(quote.get("06. volume", 0)),
                     "latest_trading_day": quote.get("07. latest trading day", ""),
                 }
+
+            except requests.RequestException as e:
+                return {"error": f"Alpha Vantage 查询失败: {e!s}"}
+
+            except ValueError as e:
+                return {"error": f"Alpha Vantage 查询失败: {e!s}"}
+
+            except KeyError as e:
+                return {"error": f"Alpha Vantage 查询失败: {e!s}"}
+
+            except OSError as e:
+                return {"error": f"Alpha Vantage 查询失败: {e!s}"}
 
             except Exception as e:
                 return {"error": f"Alpha Vantage 查询失败: {e!s}"}
