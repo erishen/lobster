@@ -77,6 +77,12 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/lobster"]
 
+[tool.ruff]
+extend = "../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = ["lobster"]
+
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true

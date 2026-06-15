@@ -1,9 +1,13 @@
 """Configuration management commands"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -22,7 +26,7 @@ def show():
     manager = ConfigManager()
     config = manager.show()
 
-    console.print("[bold cyan]Current Lobster Configuration[/]")
+    logger.info("Current Lobster Configuration")
 
     table = Table()
     table.add_column("Setting", style="cyan")
@@ -55,9 +59,9 @@ def set(key, value):
 
     try:
         manager.set(key, value)
-        console.print(f"[green]✓[/] Configuration updated: {key} = {value}")
+        logger.info(f" Configuration updated: {key} = {value}")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e!s}")
+        logger.error(f"Error: {e!s}")
 
 
 @config_cmd.command()
@@ -70,7 +74,7 @@ def get(key):
     value = manager.get(key)
 
     if value is None:
-        console.print(f"[yellow]Configuration key '{key}' not found[/]")
+        logger.error(f"Configuration key '{key}' not found")
     else:
         if "api_key" in key.lower():
             value = "********"
@@ -84,7 +88,7 @@ def reset():
 
     manager = ConfigManager()
     manager.reset()
-    console.print("[green]✓[/] Configuration reset to defaults")
+    logger.info(" Configuration reset to defaults")
 
 
 @config_cmd.command()
@@ -93,5 +97,5 @@ def path():
     from lobster.core.config import ConfigManager
 
     manager = ConfigManager()
-    console.print(f"[bold cyan]Configuration file:[/] {manager.config_file}")
-    console.print(f"[bold cyan]Configuration directory:[/] {manager.config_dir}")
+    logger.info(f"Configuration file: {manager.config_file}")
+    logger.info(f"Configuration directory: {manager.config_dir}")

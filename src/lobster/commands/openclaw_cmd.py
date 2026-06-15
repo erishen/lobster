@@ -1,5 +1,6 @@
 """OpenClaw 集成命令模块"""
 
+import logging
 import subprocess
 
 import click
@@ -7,6 +8,8 @@ import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -26,20 +29,29 @@ def status():
         response = requests.get("http://localhost:8000/health", timeout=2)
         if response.status_code == 200:
             data = response.json()
-            console.print("\n✅ [bold green]OpenClaw 正在运行[/bold green]")
-            console.print("  服务地址: http://localhost:8000")
+            logger.info("\n OpenClaw 正在运行")
+            logger.info(" 服务地址: http://localhost:8000")
             if "version" in data:
-                console.print(f"  版本: {data['version']}")
+                logger.info(f" 版本: {data['version']}")
             if "model" in data:
-                console.print(f"  当前模型: {data['model']}")
+                logger.info(f" 当前模型: {data['model']}")
         else:
-            console.print("\n⚠️  [bold yellow]OpenClaw 服务异常[/bold yellow]")
-            console.print(f"  状态码: {response.status_code}")
+            logger.error("\n OpenClaw 服务异常")
+            logger.info(f" 状态码: {response.status_code}")
     except requests.exceptions.ConnectionError:
-        console.print("\n❌ [bold red]OpenClaw 未运行[/bold red]")
-        console.print("\n💡 提示: 运行 'lobster openclaw start' 启动服务")
+        logger.error("\n OpenClaw 未运行")
+        logger.info("\n 提示: 运行 'lobster openclaw start' 启动服务")
+    except requests.RequestException as e:
+        logger.error(f"\n 检查失败: {e!s}")
+
+    except ValueError as e:
+        logger.error(f"\n 检查失败: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"\n 检查失败: {e!s}")
+
     except Exception as e:
-        console.print(f"\n❌ [bold red]检查失败: {e!s}[/bold red]")
+        logger.error(f"\n 检查失败: {e!s}")
 
 
 @openclaw.command()
@@ -57,23 +69,23 @@ def start(port, host, model, daemon):
         if daemon:
             cmd.append("--daemon")
             subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            console.print("\n✅ [bold green]OpenClaw 已在后台启动[/bold green]")
-            console.print(f"  服务地址: http://{host}:{port}")
-            console.print(f"  默认模型: {model}")
+            logger.info("\n OpenClaw 已在后台启动")
+            logger.info(f" 服务地址: http://{host}:{port}")
+            logger.info(f" 默认模型: {model}")
         else:
-            console.print("\n🚀 [bold green]启动中...[/bold green]")
-            console.print(f"  服务地址: http://{host}:{port}")
-            console.print(f"  默认模型: {model}")
-            console.print("\n💡 按 Ctrl+C 停止服务\n")
+            logger.info("\n 启动中...")
+            logger.info(f" 服务地址: http://{host}:{port}")
+            logger.info(f" 默认模型: {model}")
+            logger.info("\n 按 Ctrl+C 停止服务\n")
             subprocess.run(cmd)
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
-        console.print("\n💡 请先安装 OpenClaw:")
-        console.print("  pip install openclaw")
+        logger.error("\n 未找到 openclaw 命令")
+        logger.info("\n 请先安装 OpenClaw:")
+        logger.info(" pip install openclaw")
     except KeyboardInterrupt:
-        console.print("\n\n✅ [bold green]服务已停止[/bold green]")
+        logger.info("\n\n 服务已停止")
     except Exception as e:
-        console.print(f"\n❌ [bold red]启动失败: {e!s}[/bold red]")
+        logger.error(f"\n 启动失败: {e!s}")
 
 
 @openclaw.command()
@@ -84,13 +96,13 @@ def stop():
     try:
         result = subprocess.run(["openclaw", "stop"], capture_output=True, text=True)
         if result.returncode == 0:
-            console.print("\n✅ [bold green]OpenClaw 已停止[/bold green]")
+            logger.info("\n OpenClaw 已停止")
         else:
-            console.print(f"\n⚠️  [bold yellow]停止失败: {result.stderr}[/bold yellow]")
+            logger.error(f"\n 停止失败: {result.stderr}")
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
+        logger.error("\n 未找到 openclaw 命令")
     except Exception as e:
-        console.print(f"\n❌ [bold red]停止失败: {e!s}[/bold red]")
+        logger.error(f"\n 停止失败: {e!s}")
 
 
 @openclaw.command()
@@ -105,11 +117,11 @@ def logs(follow):
             cmd.append("--follow")
         subprocess.run(cmd)
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
+        logger.error("\n 未找到 openclaw 命令")
     except KeyboardInterrupt:
-        console.print("\n\n✅ [bold green]日志查看结束[/bold green]")
+        logger.info("\n\n 日志查看结束")
     except Exception as e:
-        console.print(f"\n❌ [bold red]查看日志失败: {e!s}[/bold red]")
+        logger.error(f"\n 查看日志失败: {e!s}")
 
 
 @openclaw.command()
@@ -120,13 +132,13 @@ def config():
     try:
         result = subprocess.run(["openclaw", "config", "show"], capture_output=True, text=True)
         if result.returncode == 0:
-            console.print(f"\n{result.stdout}")
+            logger.info(f"\n{result.stdout}")
         else:
-            console.print(f"\n⚠️  [bold yellow]获取配置失败: {result.stderr}[/bold yellow]")
+            logger.error(f"\n 获取配置失败: {result.stderr}")
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
+        logger.error("\n 未找到 openclaw 命令")
     except Exception as e:
-        console.print(f"\n❌ [bold red]获取配置失败: {e!s}[/bold red]")
+        logger.error(f"\n 获取配置失败: {e!s}")
 
 
 @openclaw.command()
@@ -141,11 +153,11 @@ def chat(model):
             cmd.extend(["--model", model])
         subprocess.run(cmd)
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
+        logger.error("\n 未找到 openclaw 命令")
     except KeyboardInterrupt:
-        console.print("\n\n✅ [bold green]对话结束[/bold green]")
+        logger.info("\n\n 对话结束")
     except Exception as e:
-        console.print(f"\n❌ [bold red]对话失败: {e!s}[/bold red]")
+        logger.error(f"\n 对话失败: {e!s}")
 
 
 @openclaw.command()
@@ -156,13 +168,13 @@ def models():
     try:
         result = subprocess.run(["openclaw", "models", "list"], capture_output=True, text=True)
         if result.returncode == 0:
-            console.print(f"\n{result.stdout}")
+            logger.info(f"\n{result.stdout}")
         else:
-            console.print(f"\n⚠️  [bold yellow]获取模型列表失败: {result.stderr}[/bold yellow]")
+            logger.error(f"\n 获取模型列表失败: {result.stderr}")
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
+        logger.error("\n 未找到 openclaw 命令")
     except Exception as e:
-        console.print(f"\n❌ [bold red]获取模型列表失败: {e!s}[/bold red]")
+        logger.error(f"\n 获取模型列表失败: {e!s}")
 
 
 @openclaw.command()
@@ -174,9 +186,9 @@ def pull(model_name):
     try:
         subprocess.run(["openclaw", "models", "pull", model_name])
     except FileNotFoundError:
-        console.print("\n❌ [bold red]未找到 openclaw 命令[/bold red]")
+        logger.error("\n 未找到 openclaw 命令")
     except Exception as e:
-        console.print(f"\n❌ [bold red]拉取模型失败: {e!s}[/bold red]")
+        logger.error(f"\n 拉取模型失败: {e!s}")
 
 
 @openclaw.command()
@@ -202,10 +214,10 @@ def info():
 
     console.print(f"\n{table}\n")
 
-    console.print("📚 [bold]常用命令:[/bold]")
-    console.print("  lobster openclaw status   - 查看状态")
-    console.print("  lobster openclaw start     - 启动服务")
-    console.print("  lobster openclaw stop      - 停止服务")
-    console.print("  lobster openclaw chat      - 开始对话")
-    console.print("  lobster openclaw logs      - 查看日志")
+    logger.info(" 常用命令:")
+    logger.info(" lobster openclaw status - 查看状态")
+    logger.info(" lobster openclaw start - 启动服务")
+    logger.info(" lobster openclaw stop - 停止服务")
+    logger.info(" lobster openclaw chat - 开始对话")
+    logger.info(" lobster openclaw logs - 查看日志")
     console.print()

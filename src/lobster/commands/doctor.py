@@ -1,5 +1,6 @@
 """System diagnostics commands"""
 
+import logging
 import platform
 import subprocess
 import sys
@@ -7,6 +8,8 @@ import sys
 import click
 from rich.console import Console
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -20,7 +23,7 @@ def doctor():
 @doctor.command()
 def check():
     """Run comprehensive system check"""
-    console.print("[bold blue]Running system diagnostics...[/]\n")
+    logger.info("Running system diagnostics...\n")
 
     checks = []
 
@@ -52,9 +55,9 @@ def check():
     total = len(checks)
 
     if passed == total:
-        console.print(f"\n[green]✓ All checks passed ({passed}/{total})[/]")
+        logger.info(f"\n All checks passed ({passed}/{total})")
     else:
-        console.print(f"\n[yellow]⚠ {total - passed} check(s) failed[/]")
+        logger.error(f"\n⚠ {total - passed} check(s) failed")
 
 
 def check_python():
@@ -105,6 +108,12 @@ def check_ollama():
             }
         else:
             return {"component": "Ollama", "status": "⚠", "details": "Not responding correctly"}
+    except requests.RequestException:
+        return {"component": "Ollama", "status": "✗", "details": "Not running"}
+
+    except ValueError:
+        return {"component": "Ollama", "status": "✗", "details": "Not running"}
+
     except Exception:
         return {"component": "Ollama", "status": "✗", "details": "Not running"}
 
@@ -185,18 +194,24 @@ def deps():
                 table.add_row(pkg["name"], pkg["version"])
 
             console.print(table)
-            console.print(f"\n[dim]Total: {len(packages)} packages[/]")
+            logger.debug(f"\nTotal: {len(packages)} packages")
         else:
-            console.print("[red]Error:[/] Failed to list packages")
+            logger.error("Error: Failed to list packages")
+
+    except ValueError as e:
+        logger.error(f"Error: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error: {e!s}")
 
     except Exception as e:
-        console.print(f"[red]Error:[/] {e!s}")
+        logger.error(f"Error: {e!s}")
 
 
 @doctor.command()
 def fix():
     """Attempt to fix common issues"""
-    console.print("[bold blue]Attempting to fix common issues...[/]\n")
+    logger.info("Attempting to fix common issues...\n")
 
     issues_fixed = []
 
@@ -221,11 +236,11 @@ def fix():
         issues_fixed.append("Created plugins directory")
 
     if issues_fixed:
-        console.print("[green]✓ Fixed issues:[/]")
+        logger.info(" Fixed issues:")
         for issue in issues_fixed:
-            console.print(f"  • {issue}")
+            logger.info(f" • {issue}")
     else:
-        console.print("[green]✓ No issues found[/]")
+        logger.info(" No issues found")
 
 
 @doctor.command()
@@ -245,11 +260,11 @@ def logs():
             found_logs.append(log_path)
 
     if not found_logs:
-        console.print("[yellow]No log files found[/]")
+        logger.info("No log files found")
         return
 
     for log_file in found_logs:
-        console.print(f"\n[bold cyan]Log: {log_file}[/]")
+        logger.info(f"\nLog: {log_file}")
 
         try:
             with open(log_file, encoding="utf-8") as f:
@@ -257,7 +272,13 @@ def logs():
 
                 # Show last 20 lines
                 for line in lines[-20:]:
-                    console.print(line.rstrip())
+                    logger.info(line.rstrip())
+
+        except KeyError as e:
+            logger.error(f"Error reading log: {e!s}")
+
+        except OSError as e:
+            logger.error(f"Error reading log: {e!s}")
 
         except Exception as e:
-            console.print(f"[red]Error reading log:[/] {e!s}")
+            logger.error(f"Error reading log: {e!s}")

@@ -1,13 +1,17 @@
 """Memory management commands for OpenClaw"""
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 import click
+import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -20,8 +24,8 @@ def ensure_memory_dir():
     try:
         MEMORY_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        console.print("[red]Error:[/] Permission denied creating memory directory")
-        console.print(f"[yellow]Please check permissions for:[/] {MEMORY_STORE_PATH.parent}")
+        logger.error("Error: Permission denied creating memory directory")
+        logger.info(f"Please check permissions for: {MEMORY_STORE_PATH.parent}")
         raise
 
 
@@ -69,8 +73,8 @@ def add(content, tag, category):
             "type": "memory",
         }
 
-        console.print("[bold blue]Adding memory to OpenClaw...[/]")
-        console.print(f"[dim]Content: {content[:100]}{'...' if len(content) > 100 else ''}[/]")
+        logger.info("Adding memory to OpenClaw...")
+        logger.debug(f"Content: {content[:100]}{'...' if len(content) > 100 else ''}")
 
         rag_system = RAGSystem(
             vector_store_type="faiss",
@@ -102,17 +106,20 @@ def add(content, tag, category):
         )
         save_memory_index(index)
 
-        console.print("[green]✓[/] Memory added successfully")
-        console.print(f"[dim]ID: {memory_id}[/]")
-        console.print(f"[dim]Category: {category}[/]")
+        logger.info(" Memory added successfully")
+        logger.debug(f"ID: {memory_id}")
+        logger.debug(f"Category: {category}")
         if tag:
-            console.print(f"[dim]Tags: {', '.join(tag)}[/]")
+            logger.debug(f"Tags: {', '.join(tag)}")
 
     except ImportError:
-        console.print("[red]Error:[/] langchain-llm-toolkit not installed")
-        console.print("[yellow]Install with:[/] pip install langchain-llm-toolkit")
+        logger.error("Error: langchain-llm-toolkit not installed")
+        logger.info("Install with: pip install langchain-llm-toolkit")
+    except KeyError as e:
+        logger.error(f"Error adding memory: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]Error adding memory:[/] {e!s}")
+        logger.error(f"Error adding memory: {e!s}")
 
 
 @memory.command()
@@ -125,8 +132,8 @@ def list(category, tag, limit):
         index = load_memory_index()
 
         if not index["memories"]:
-            console.print("[yellow]No memories found[/]")
-            console.print("[dim]Add memories using: lobster memory add <content>[/]")
+            logger.info("No memories found")
+            logger.debug("Add memories using: lobster memory add <content>")
             return
 
         memories = index["memories"]
@@ -139,7 +146,7 @@ def list(category, tag, limit):
 
         memories = sorted(memories, key=lambda x: x["timestamp"], reverse=True)[:limit]
 
-        console.print(f"[bold blue]OpenClaw Memories ({len(memories)} found)[/]\n")
+        logger.info(f"OpenClaw Memories ({len(memories)} found)\n")
 
         table = Table()
         table.add_column("ID", style="cyan", width=15)
@@ -149,20 +156,22 @@ def list(category, tag, limit):
         table.add_column("Timestamp", style="blue", width=19)
 
         for mem in memories:
-            content_preview = (
-                mem["content"][:47] + "..." if len(mem["content"]) > 50 else mem["content"]
-            )
+            content_preview = mem["content"][:47] + "..." if len(mem["content"]) > 50 else mem["content"]
             tags_str = ", ".join(mem.get("tags", []))[:15]
             timestamp = mem["timestamp"][:19]
 
-            table.add_row(
-                mem["id"], content_preview, mem.get("category", "general"), tags_str, timestamp
-            )
+            table.add_row(mem["id"], content_preview, mem.get("category", "general"), tags_str, timestamp)
 
         console.print(table)
 
+    except requests.RequestException as e:
+        logger.error(f"Error listing memories: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error listing memories: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]Error listing memories:[/] {e!s}")
+        logger.error(f"Error listing memories: {e!s}")
 
 
 @memory.command()
@@ -174,12 +183,12 @@ def search(query, k):
         from langchain_llm_toolkit import RAGSystem
 
         if not MEMORY_STORE_PATH.exists():
-            console.print("[yellow]No memories found[/]")
-            console.print("[dim]Add memories using: lobster memory add <content>[/]")
+            logger.info("No memories found")
+            logger.debug("Add memories using: lobster memory add <content>")
             return
 
-        console.print("[bold blue]Searching memories...[/]")
-        console.print(f"[dim]Query: {query}[/]")
+        logger.info("Searching memories...")
+        logger.debug(f"Query: {query}")
 
         rag_system = RAGSystem(
             vector_store_type="faiss",
@@ -194,10 +203,10 @@ def search(query, k):
             results = rag_system.retrieve_documents(query, k=k)
 
         if not results:
-            console.print("[yellow]No matching memories found[/]")
+            logger.info("No matching memories found")
             return
 
-        console.print(f"\n[green]✓[/] Found {len(results)} matching memories\n")
+        logger.info(f"\n Found {len(results)} matching memories\n")
 
         for i, doc in enumerate(results, 1):
             metadata = doc.metadata
@@ -208,17 +217,23 @@ def search(query, k):
                     border_style="cyan",
                 )
             )
-            console.print(f"[dim]Category: {metadata.get('category', 'general')}[/]")
+            logger.debug(f"Category: {metadata.get('category', 'general')}")
             if metadata.get("tags"):
-                console.print(f"[dim]Tags: {', '.join(metadata['tags'])}[/]")
-            console.print(f"[dim]Timestamp: {metadata.get('timestamp', 'N/A')}[/]")
+                logger.debug(f"Tags: {', '.join(metadata['tags'])}")
+            logger.debug(f"Timestamp: {metadata.get('timestamp', 'N/A')}")
             console.print()
 
     except ImportError:
-        console.print("[red]Error:[/] langchain-llm-toolkit not installed")
-        console.print("[yellow]Install with:[/] pip install langchain-llm-toolkit")
+        logger.error("Error: langchain-llm-toolkit not installed")
+        logger.info("Install with: pip install langchain-llm-toolkit")
+    except requests.RequestException as e:
+        logger.error(f"Error searching memories: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error searching memories: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]Error searching memories:[/] {e!s}")
+        logger.error(f"Error searching memories: {e!s}")
 
 
 @memory.command()
@@ -235,23 +250,23 @@ def delete(memory_id):
                 break
 
         if memory_to_delete is None:
-            console.print(f"[red]Error:[/] Memory with ID '{memory_id}' not found")
+            logger.error(f"Error: Memory with ID '{memory_id}' not found")
             return
 
         deleted_memory = index["memories"].pop(memory_to_delete)
         save_memory_index(index)
 
-        console.print("[green]✓[/] Memory deleted successfully")
-        console.print(f"[dim]ID: {memory_id}[/]")
-        console.print(f"[dim]Content: {deleted_memory['content'][:50]}...[/]")
+        logger.info(" Memory deleted successfully")
+        logger.debug(f"ID: {memory_id}")
+        logger.debug(f"Content: {deleted_memory['content'][:50]}...")
 
-        console.print(
-            "[yellow]Note:[/] The memory is removed from index. "
-            "Vector store will be rebuilt on next add."
-        )
+        console.print("[yellow]Note:[/] The memory is removed from index. Vector store will be rebuilt on next add.")
+
+    except KeyError as e:
+        logger.error(f"Error deleting memory: {e!s}")
 
     except Exception as e:
-        console.print(f"[red]Error deleting memory:[/] {e!s}")
+        logger.error(f"Error deleting memory: {e!s}")
 
 
 @memory.command()
@@ -267,10 +282,13 @@ def clear():
         if MEMORY_INDEX_FILE.exists():
             MEMORY_INDEX_FILE.unlink()
 
-        console.print("[green]✓[/] All memories cleared successfully")
+        logger.info(" All memories cleared successfully")
+
+    except OSError as e:
+        logger.error(f"Error clearing memories: {e!s}")
 
     except Exception as e:
-        console.print(f"[red]Error clearing memories:[/] {e!s}")
+        logger.error(f"Error clearing memories: {e!s}")
 
 
 @memory.command()
@@ -280,7 +298,7 @@ def stats():
         index = load_memory_index()
 
         if not index["memories"]:
-            console.print("[yellow]No memories found[/]")
+            logger.info("No memories found")
             return
 
         total_memories = len(index["memories"])
@@ -294,7 +312,7 @@ def stats():
 
         unique_tags = len(set(all_tags))
 
-        console.print("[bold blue]Memory Statistics[/]\n")
+        logger.info("Memory Statistics\n")
 
         table = Table()
         table.add_column("Metric", style="cyan")
@@ -306,9 +324,15 @@ def stats():
 
         console.print(table)
 
-        console.print("\n[bold yellow]Categories:[/]")
+        logger.info("\nCategories:")
         for cat, count in sorted(categories.items(), key=lambda x: x[1], reverse=True):
-            console.print(f"  • {cat}: {count} memories")
+            logger.info(f" • {cat}: {count} memories")
+
+    except requests.RequestException as e:
+        logger.error(f"Error getting stats: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error getting stats: {e!s}")
 
     except Exception as e:
-        console.print(f"[red]Error getting stats:[/] {e!s}")
+        logger.error(f"Error getting stats: {e!s}")

@@ -612,6 +612,18 @@ class ToolRegistry:
             logger.exception(f"Tool {name} failed: {e.message}")
             stats_tracker.record_call(name, False, duration_ms, e.message)
             return e.to_dict()
+        except KeyError as e:
+            duration_ms = (time.time() - start_time) * 1000
+            error_msg = str(e)
+            logger.tool_result(name, False, error_msg)
+            logger.exception(f"Tool {name} failed: {error_msg}")
+            stats_tracker.record_call(name, False, duration_ms, error_msg)
+            return error_response(
+                ErrorCode.TOOL_EXECUTION_ERROR,
+                error_msg,
+                {"tool_name": name, "duration_ms": duration_ms},
+            )
+
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
             error_msg = str(e)
@@ -651,9 +663,10 @@ class ToolRegistry:
                 "truncated": truncated,
             }
         except UnicodeDecodeError as e:
-            return {
-                "error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {e!s}").message
-            }
+            return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, f"文件编码错误: {e!s}").message}
+        except KeyError as e:
+            return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, str(e)).message}
+
         except Exception as e:
             return {"error": LobsterError(ErrorCode.FILE_READ_ERROR, str(e)).message}
 
@@ -682,6 +695,9 @@ class ToolRegistry:
                 file_path.write_text(content, encoding="utf-8")
 
             return {"path": str(file_path.absolute()), "size": len(content)}
+        except OSError as e:
+            return {"error": LobsterError(ErrorCode.FILE_WRITE_ERROR, str(e)).message}
+
         except Exception as e:
             return {"error": LobsterError(ErrorCode.FILE_WRITE_ERROR, str(e)).message}
 
@@ -715,6 +731,9 @@ class ToolRegistry:
         try:
             file_path.unlink()
             return {"deleted": str(file_path)}
+        except OSError as e:
+            return {"error": LobsterError(ErrorCode.FILE_DELETE_ERROR, str(e)).message}
+
         except Exception as e:
             return {"error": LobsterError(ErrorCode.FILE_DELETE_ERROR, str(e)).message}
 
@@ -742,6 +761,9 @@ class ToolRegistry:
             }
         except ImportError:
             return {"error": LobsterError(ErrorCode.NETWORK_ERROR, "requests 库未安装").message}
+        except requests.RequestException as e:
+            return {"error": LobsterError(ErrorCode.REQUEST_FAILED, str(e)).message}
+
         except Exception as e:
             return {"error": LobsterError(ErrorCode.REQUEST_FAILED, str(e)).message}
 
@@ -785,11 +807,7 @@ class ToolRegistry:
         dangerous_imports = ["os.system", "subprocess", "eval(", "exec(", "__import__"]
         for dangerous in dangerous_imports:
             if dangerous in code:
-                return {
-                    "error": LobsterError(
-                        ErrorCode.CODE_DANGEROUS, f"代码包含危险操作: {dangerous}"
-                    ).message
-                }
+                return {"error": LobsterError(ErrorCode.CODE_DANGEROUS, f"代码包含危险操作: {dangerous}").message}
 
         try:
             result = subprocess.run(
@@ -804,9 +822,7 @@ class ToolRegistry:
                 "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {
-                "error": LobsterError(ErrorCode.CODE_TIMEOUT, f"执行超时 ({timeout}秒)").message
-            }
+            return {"error": LobsterError(ErrorCode.CODE_TIMEOUT, f"执行超时 ({timeout}秒)").message}
         except Exception as e:
             return {"error": LobsterError(ErrorCode.CODE_ERROR, str(e)).message}
 
@@ -818,18 +834,14 @@ class ToolRegistry:
             return {"error": error.message if isinstance(error, LobsterError) else str(error)}
 
         try:
-            result = subprocess.run(
-                command, shell=True, capture_output=True, text=True, timeout=timeout
-            )
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout)
             return {
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {
-                "error": LobsterError(ErrorCode.COMMAND_TIMEOUT, f"执行超时 ({timeout}秒)").message
-            }
+            return {"error": LobsterError(ErrorCode.COMMAND_TIMEOUT, f"执行超时 ({timeout}秒)").message}
         except Exception as e:
             return {"error": LobsterError(ErrorCode.COMMAND_FAILED, str(e)).message}
 
@@ -852,6 +864,9 @@ class ToolRegistry:
                 return {"sent": True, "message": message}
             else:
                 return {"sent": False, "message": f"[{title}] {message}"}
+        except KeyError as e:
+            return {"error": str(e)}
+
         except Exception as e:
             return {"error": str(e)}
 
@@ -891,9 +906,7 @@ class ToolRegistry:
 
             return {"data": parsed}
         except json.JSONDecodeError as e:
-            return {
-                "error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {e!s}").message
-            }
+            return {"error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"JSON 解析错误: {e!s}").message}
         except (KeyError, IndexError) as e:
             return {"error": LobsterError(ErrorCode.JSON_PARSE_ERROR, f"路径不存在: {e!s}").message}
 
@@ -913,11 +926,7 @@ class ToolRegistry:
         }
 
         if operation not in operations:
-            return {
-                "error": LobsterError(
-                    ErrorCode.TEXT_PROCESS_ERROR, f"未知操作: {operation}"
-                ).message
-            }
+            return {"error": LobsterError(ErrorCode.TEXT_PROCESS_ERROR, f"未知操作: {operation}").message}
 
         return {"result": operations[operation]}
 

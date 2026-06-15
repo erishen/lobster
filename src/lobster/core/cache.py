@@ -98,9 +98,7 @@ class ToolCache:
     def cleanup_expired(self) -> int:
         """清理过期缓存"""
         current_time = time.time()
-        expired_keys = [
-            key for key, (_, expire_time, _) in self._cache.items() if current_time >= expire_time
-        ]
+        expired_keys = [key for key, (_, expire_time, _) in self._cache.items() if current_time >= expire_time]
         for key in expired_keys:
             del self._cache[key]
         return len(expired_keys)

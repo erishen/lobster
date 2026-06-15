@@ -1,8 +1,12 @@
 """系统通知命令模块"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -24,7 +28,7 @@ def send(message, title, icon):
         lobster notify send "任务完成"
         lobster notify send "错误: 服务宕机" --title "警告"
     """
-    console.print(f"📨 [bold]发送通知: {title}[/] - {message}")
+    logger.info(f" 发送通知: {title} - {message}")
 
     import sys
 
@@ -35,7 +39,7 @@ def send(message, title, icon):
     elif sys.platform == "win32":
         _send_windows(message, title)
     else:
-        console.print("[yellow]不支持的平台[/]")
+        logger.info("不支持的平台")
 
 
 def _send_macos(message: str, title: str):
@@ -45,9 +49,9 @@ def _send_macos(message: str, title: str):
     try:
         script = f'display notification "{message}" with title "{title}"'
         subprocess.run(["osascript", "-e", script], check=True)
-        console.print("✅ [green]通知已发送[/]")
+        logger.info(" 通知已发送")
     except Exception as e:
-        console.print(f"❌ [red]发送失败: {e!s}[/]")
+        logger.error(f" 发送失败: {e!s}")
 
 
 def _send_linux(message: str, title: str):
@@ -59,11 +63,11 @@ def _send_linux(message: str, title: str):
             ["notify-send", title, message],
             check=True,
         )
-        console.print("✅ [green]通知已发送[/]")
+        logger.info(" 通知已发送")
     except FileNotFoundError:
-        console.print("[red]Error: notify-send 未安装 (sudo apt install libnotify-bin)[/]")
+        logger.error("Error: notify-send 未安装 (sudo apt install libnotify-bin)")
     except Exception as e:
-        console.print(f"❌ [red]发送失败: {e!s}[/]")
+        logger.error(f" 发送失败: {e!s}")
 
 
 def _send_windows(message: str, title: str):
@@ -73,11 +77,11 @@ def _send_windows(message: str, title: str):
 
         toaster = ToastNotifier()
         toaster.show_toast(title, message, duration=5)
-        console.print("✅ [green]通知已发送[/]")
+        logger.info(" 通知已发送")
     except ImportError:
-        console.print("[red]Error: win10toast 未安装 (pip install win10toast)[/]")
+        logger.error("Error: win10toast 未安装 (pip install win10toast)")
     except Exception as e:
-        console.print(f"❌ [red]发送失败: {e!s}[/]")
+        logger.error(f" 发送失败: {e!s}")
 
 
 @notify.command()
@@ -89,8 +93,8 @@ def alert(message, title):
     示例:
         lobster notify alert "服务器负载过高!"
     """
-    console.print(f"🚨 [bold red]发送警报: {title}[/]")
-    console.print(f"   {message}\n")
+    logger.info(f" 发送警报: {title}")
+    logger.info(f" {message}\n")
 
     send.callback(message, title, None)
 
@@ -99,8 +103,8 @@ def alert(message, title):
 def list():
     """列出通知历史 (如果有)"""
     console.print(Panel("📋 [bold cyan]通知历史[/bold cyan]", border_style="blue"))
-    console.print("[yellow]通知历史功能需要额外配置[/]")
-    console.print("提示: 可以使用 lobster remember 记录重要通知")
+    logger.info("通知历史功能需要额外配置")
+    logger.info("提示: 可以使用 lobster remember 记录重要通知")
 
 
 @notify.command()
@@ -121,24 +125,24 @@ def beep(sound):
             if sound:
                 subprocess.run(["say", "beep"], capture_output=True)
             else:
-                console.print("\a")
-            console.print("✅ [green]提示音已播放[/]")
+                logger.info("\a")
+            logger.info(" 提示音已播放")
         except Exception:
-            console.print("\a")
-            console.print("✅ [green]提示音已播放[/]")
+            logger.info("\a")
+            logger.info(" 提示音已播放")
 
     elif sys.platform == "linux":
-        console.print("\a")
-        console.print("✅ [green]提示音已播放[/]")
+        logger.info("\a")
+        logger.info(" 提示音已播放")
 
     elif sys.platform == "win32":
         import winsound
 
         winsound.Beep(1000, 500)
-        console.print("✅ [green]提示音已播放[/]")
+        logger.info(" 提示音已播放")
 
     else:
-        console.print("[yellow]不支持的平台[/]")
+        logger.info("不支持的平台")
 
 
 @notify.command()
@@ -159,9 +163,9 @@ def check():
     elif sys.platform == "win32":
         _send_windows("这是一条测试通知", "Lobster 检查")
     else:
-        console.print("[yellow]不支持的平台[/]")
+        logger.info("不支持的平台")
 
-    console.print("\n如果收到通知，说明通知功能正常工作")
+    logger.info("\n如果收到通知，说明通知功能正常工作")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from lobster.commands.search_cmd import search
 
 

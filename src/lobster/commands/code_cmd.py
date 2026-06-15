@@ -1,5 +1,7 @@
 """代码工具命令模块"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
@@ -7,6 +9,8 @@ from rich.syntax import Syntax
 
 from lobster.core.config import ConfigManager
 from lobster.core.llm_client import get_llm_client
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -35,9 +39,9 @@ def review(file_path, model):
     with open(file_path) as f:
         code_content = f.read()
 
-    console.print("\n📄 [bold]代码内容:[/bold]")
+    logger.info("\n 代码内容:")
     syntax = Syntax(code_content, "python", theme="monokai", line_numbers=True)
-    console.print(syntax)
+    logger.info(syntax)
 
     llm = get_llm_client(model)
     llm.set_model(model)
@@ -60,7 +64,7 @@ def review(file_path, model):
     with console.status("[bold green]分析中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]审查结果:[/bold green]\n{result}\n")
+    logger.info(f"\n 审查结果:\n{result}\n")
 
 
 @code.command()
@@ -81,9 +85,9 @@ def explain(file_path, model):
     with open(file_path) as f:
         code_content = f.read()
 
-    console.print("\n📄 [bold]代码内容:[/bold]")
+    logger.info("\n 代码内容:")
     syntax = Syntax(code_content, "python", theme="monokai", line_numbers=True)
-    console.print(syntax)
+    logger.info(syntax)
 
     llm = get_llm_client(model)
     llm.set_model(model)
@@ -105,7 +109,7 @@ def explain(file_path, model):
     with console.status("[bold green]分析中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]代码解释:[/bold green]\n{result}\n")
+    logger.info(f"\n 代码解释:\n{result}\n")
 
 
 @code.command()
@@ -154,7 +158,7 @@ def refactor(file_path, model, focus):
     with console.status("[bold green]分析中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]重构建议:[/bold green]\n{result}\n")
+    logger.info(f"\n 重构建议:\n{result}\n")
 
 
 @code.command()
@@ -196,7 +200,7 @@ def test(file_path, language, model):
     with console.status("[bold green]生成测试中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]测试代码:[/bold green]\n{result}\n")
+    logger.info(f"\n 测试代码:\n{result}\n")
 
 
 @code.command()
@@ -243,7 +247,7 @@ def translate(file_path, target_language, model):
     with console.status("[bold green]翻译中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]翻译结果:[/bold green]\n{result}\n")
+    logger.info(f"\n 翻译结果:\n{result}\n")
 
 
 @code.command()
@@ -284,4 +288,4 @@ def document(file_path, model):
     with console.status("[bold green]生成文档中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]文档内容:[/bold green]\n{result}\n")
+    logger.info(f"\n 文档内容:\n{result}\n")

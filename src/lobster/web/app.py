@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import requests
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -50,6 +51,15 @@ def get_available_models():
         if response.status_code == 200:
             models = response.json().get("models", [])
             return [f"ollama/{m['name']}" for m in models]
+    except requests.RequestException:
+        pass
+
+    except ValueError:
+        pass
+
+    except KeyError:
+        pass
+
     except Exception:
         pass
     return ["ollama/gemma3", "ollama/llama3.1:8b", "ollama/deepseek-r1:7b"]
@@ -61,12 +71,8 @@ def chat_page():
 
     _col1, col2 = st.columns([3, 1])
     with col2:
-        st.session_state.model = st.selectbox(
-            "Model", get_available_models(), index=0, key="model_select"
-        )
-        st.session_state.with_memory = st.checkbox(
-            "Enable Memory", value=st.session_state.with_memory
-        )
+        st.session_state.model = st.selectbox("Model", get_available_models(), index=0, key="model_select")
+        st.session_state.with_memory = st.checkbox("Enable Memory", value=st.session_state.with_memory)
 
         if st.button("Clear Chat", key="clear_chat"):
             st.session_state.messages = []
@@ -202,6 +208,9 @@ def memory_page():
                     st.success(f"✅ Memory added successfully! ID: {memory_id}")
                     st.rerun()
 
+                except requests.RequestException as e:
+                    st.error(f"❌ Error: {e!s}")
+
                 except Exception as e:
                     st.error(f"❌ Error: {e!s}")
             else:
@@ -219,9 +228,7 @@ def memory_page():
 
                 if memories:
                     for mem in reversed(memories):
-                        with st.expander(
-                            f"**{mem['id']}** - {mem['content'][:50]}...", expanded=False
-                        ):
+                        with st.expander(f"**{mem['id']}** - {mem['content'][:50]}...", expanded=False):
                             st.markdown(f"**Content:** {mem['content']}")
                             st.markdown(f"**Category:** {mem.get('category', 'general')}")
                             st.markdown(f"**Tags:** {', '.join(mem.get('tags', []))}")
@@ -257,17 +264,11 @@ def memory_page():
                             st.markdown(f"**Found {len(results)} matching memories:**")
                             for i, doc in enumerate(results, 1):
                                 metadata = doc.metadata
-                                with st.expander(
-                                    f"**Result {i}** - {doc.page_content[:50]}...", expanded=False
-                                ):
+                                with st.expander(f"**Result {i}** - {doc.page_content[:50]}...", expanded=False):
                                     st.markdown(f"**Content:** {doc.page_content}")
-                                    st.markdown(
-                                        f"**Category:** {metadata.get('category', 'general')}"
-                                    )
+                                    st.markdown(f"**Category:** {metadata.get('category', 'general')}")
                                     st.markdown(f"**Tags:** {', '.join(metadata.get('tags', []))}")
-                                    st.markdown(
-                                        f"**Timestamp:** {metadata.get('timestamp', 'N/A')}"
-                                    )
+                                    st.markdown(f"**Timestamp:** {metadata.get('timestamp', 'N/A')}")
                         else:
                             st.info("No matching memories found")
                     else:
@@ -303,6 +304,12 @@ def history_page():
                         "data": data,
                     }
                 )
+            except requests.RequestException:
+                continue
+
+            except OSError:
+                continue
+
             except Exception:
                 continue
 
@@ -311,9 +318,7 @@ def history_page():
         if conversations:
             for conv in conversations:
                 with st.expander(
-                    f"**{conv['timestamp'][:19]}** - "
-                    f"{conv['message_count']} messages - "
-                    f"{conv['preview']}...",
+                    f"**{conv['timestamp'][:19]}** - {conv['message_count']} messages - {conv['preview']}...",
                     expanded=False,
                 ):
                     for msg in conv["data"].get("messages", []):
@@ -327,6 +332,15 @@ def history_page():
                         st.markdown("---")
         else:
             st.info("No conversation history found")
+
+    except requests.RequestException as e:
+        st.error(f"❌ Error: {e!s}")
+
+    except KeyError as e:
+        st.error(f"❌ Error: {e!s}")
+
+    except OSError as e:
+        st.error(f"❌ Error: {e!s}")
 
     except Exception as e:
         st.error(f"❌ Error: {e!s}")

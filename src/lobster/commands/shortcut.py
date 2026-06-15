@@ -1,5 +1,7 @@
 """快捷命令模块 - 提供常用命令的快捷方式"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
@@ -7,6 +9,8 @@ from rich.panel import Panel
 from lobster.core.config import ConfigManager
 from lobster.core.llm_client import get_llm_client
 from lobster.core.memory_store import EnhancedMemoryManager
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -31,14 +35,14 @@ def ask(question, model, stream):
     llm = get_llm_client(model)
 
     if stream:
-        console.print("\n💡 [bold green]回答:[/bold green]")
+        logger.info("\n 回答:")
         for chunk in llm.generate_stream(question):
-            console.print(chunk, end="")
-        console.print("\n")
+            logger.info(chunk, end="")
+        logger.info("\n")
     else:
         with console.status("[bold green]思考中...[/bold green]"):
             response = llm.generate(question)
-        console.print(f"\n💡 [bold green]回答:[/bold green]\n{response}\n")
+        logger.info(f"\n 回答:\n{response}\n")
 
 
 @click.command()
@@ -55,23 +59,21 @@ def query(query_text, k, model):
     config = ConfigManager()
     model = model or config.get("default_model", "ollama/gemma3")
 
-    console.print(
-        Panel(f"🔍 [bold cyan]{query_text}[/bold cyan]", title="查询", border_style="blue")
-    )
+    console.print(Panel(f"🔍 [bold cyan]{query_text}[/bold cyan]", title="查询", border_style="blue"))
 
     # 使用简单的记忆搜索
     memory = EnhancedMemoryManager()
     results = memory.search_memory(query_text, k=k)
 
     if results:
-        console.print(f"\n� [bold green]找到 {len(results)} 条相关记忆:[/bold green]\n")
+        logger.info(f"\n� 找到 {len(results)} 条相关记忆:\n")
         for i, mem in enumerate(results, 1):
-            console.print(f"  {i}. {mem['content']}")
+            logger.info(f" {i}. {mem['content']}")
             tags = mem.get("metadata", {}).get("tags", [])
             if tags:
-                console.print(f"     🏷  {', '.join(tags)}")
+                logger.info(f" 🏷 {', '.join(tags)}")
     else:
-        console.print("\n❌ [bold red]没有找到相关记忆[/bold red]")
+        logger.error("\n 没有找到相关记忆")
 
 
 @click.command()
@@ -95,9 +97,9 @@ def remember(content, tags, category):
         category=category,
     )
 
-    console.print(f"✅ [bold green]已记住！[/bold green] ID: {memory_id}")
+    logger.info(f" 已记住！ ID: {memory_id}")
     if tags:
-        console.print(f"🏷️  标签: {', '.join(tags)}")
+        logger.info(f"🏷️ 标签: {', '.join(tags)}")
 
 
 @click.command()
@@ -109,23 +111,21 @@ def recall(search_text):
         lobster recall "OpenClaw"
         lobster recall "配置"
     """
-    console.print(
-        Panel(f"🧠 [bold cyan]{search_text}[/bold cyan]", title="回忆", border_style="blue")
-    )
+    console.print(Panel(f"🧠 [bold cyan]{search_text}[/bold cyan]", title="回忆", border_style="blue"))
 
     # 使用简单的记忆搜索
     memory = EnhancedMemoryManager()
     results = memory.search_memory(search_text, k=5)
 
     if results:
-        console.print(f"\n💭 [bold green]找到 {len(results)} 条相关记忆:[/bold green]\n")
+        logger.info(f"\n💭 找到 {len(results)} 条相关记忆:\n")
         for i, mem in enumerate(results, 1):
-            console.print(f"  {i}. {mem['content']}")
+            logger.info(f" {i}. {mem['content']}")
             tags = mem.get("metadata", {}).get("tags", [])
             if tags:
-                console.print(f"     🏷  {', '.join(tags)}")
+                logger.info(f" 🏷 {', '.join(tags)}")
     else:
-        console.print("\n❌ [bold red]没有找到相关记忆[/bold red]")
+        logger.error("\n 没有找到相关记忆")
 
 
 @click.command()
@@ -139,23 +139,23 @@ def status():
     config = ConfigManager()
 
     console.print("\n📊 [bold]系统信息[/bold]")
-    console.print("  版本: 0.1.0")
-    console.print(f"  配置文件: {config.config_file}")
+    logger.info(" 版本: 0.1.0")
+    logger.info(f" 配置文件: {config.config_file}")
 
-    console.print("\n🤖 [bold]模型配置[/bold]")
-    console.print(f"  默认模型: {config.get('default_model', '未设置')}")
+    logger.info("\n🤖 模型配置")
+    logger.info(f" 默认模型: {config.get('default_model', '未设置')}")
 
     # 使用简单的记忆管理
     memory = EnhancedMemoryManager()
     stats = memory.get_stats()
 
-    console.print("\n🧠 [bold]记忆统计[/bold]")
-    console.print(f"  总记忆数: {stats['total']}")
+    logger.info("\n🧠 记忆统计")
+    logger.info(f" 总记忆数: {stats['total']}")
 
     if stats["categories"]:
-        console.print(f"  分类分布: {stats['categories']}")
+        logger.info(f" 分类分布: {stats['categories']}")
 
     if stats["tags"]:
-        console.print(f"  标签分布: {stats['tags']}")
+        logger.info(f" 标签分布: {stats['tags']}")
 
-    console.print("\n✅ [bold green]系统正常[/bold green]\n")
+    logger.info("\n 系统正常\n")

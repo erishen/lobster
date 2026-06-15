@@ -1,12 +1,15 @@
 """Prompt template management commands"""
 
 import json
+import logging
 from pathlib import Path
 
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -31,8 +34,8 @@ def list():
     templates = list_templates()
 
     if not templates:
-        console.print("[yellow]No templates found[/]")
-        console.print("[dim]Create a template with: lobster template create <name>[/]")
+        logger.info("No templates found")
+        logger.debug("Create a template with: lobster template create <name>")
         return
 
     table = Table(title="Saved Templates")
@@ -60,7 +63,7 @@ def show(name):
     template_file = TEMPLATES_DIR / f"{name}.json"
 
     if not template_file.exists():
-        console.print(f"[red]Error:[/] Template '{name}' not found")
+        logger.error(f"Error: Template '{name}' not found")
         return
 
     with open(template_file, encoding="utf-8") as f:
@@ -86,7 +89,7 @@ def show(name):
 def create(name, category, description):
     """Create a new template interactively"""
     ensure_templates_dir()
-    console.print(f"[bold blue]Creating template:[/] {name}")
+    logger.info(f"Creating template: {name}")
 
     if not description:
         description = click.prompt("Description", default="")
@@ -94,7 +97,7 @@ def create(name, category, description):
     template_text = click.edit("Enter your template here. Use {variable} for variables.")
 
     if not template_text:
-        console.print("[yellow]Cancelled[/]")
+        logger.info("Cancelled")
         return
 
     # Extract variables
@@ -114,9 +117,9 @@ def create(name, category, description):
     with open(template_file, "w", encoding="utf-8") as f:
         json.dump(template_data, f, indent=2, ensure_ascii=False)
 
-    console.print(f"[green]✓[/] Template '{name}' created successfully")
+    logger.info(f" Template '{name}' created successfully")
     if variables:
-        console.print(f"[dim]Variables: {', '.join(variables)}[/]")
+        logger.debug(f"Variables: {', '.join(variables)}")
 
 
 @template.command()
@@ -126,7 +129,7 @@ def edit(name):
     template_file = TEMPLATES_DIR / f"{name}.json"
 
     if not template_file.exists():
-        console.print(f"[red]Error:[/] Template '{name}' not found")
+        logger.error(f"Error: Template '{name}' not found")
         return
 
     with open(template_file, encoding="utf-8") as f:
@@ -135,7 +138,7 @@ def edit(name):
     template_text = click.edit(template_data.get("template", ""))
 
     if not template_text:
-        console.print("[yellow]Cancelled[/]")
+        logger.info("Cancelled")
         return
 
     # Extract variables
@@ -149,7 +152,7 @@ def edit(name):
     with open(template_file, "w", encoding="utf-8") as f:
         json.dump(template_data, f, indent=2, ensure_ascii=False)
 
-    console.print(f"[green]✓[/] Template '{name}' updated successfully")
+    logger.info(f" Template '{name}' updated successfully")
 
 
 @template.command()
@@ -160,15 +163,15 @@ def delete(name):
     template_file = TEMPLATES_DIR / f"{name}.json"
 
     if not template_file.exists():
-        console.print(f"[red]Error:[/] Template '{name}' not found")
+        logger.error(f"Error: Template '{name}' not found")
         return
 
     if not click.confirm(f"Delete template '{name}'?"):
-        console.print("[yellow]Cancelled[/]")
+        logger.info("Cancelled")
         return
 
     template_file.unlink()
-    console.print(f"[green]✓[/] Template '{name}' deleted")
+    logger.info(f" Template '{name}' deleted")
 
 
 @template.command()
@@ -180,7 +183,7 @@ def apply(name, model):
     template_file = TEMPLATES_DIR / f"{name}.json"
 
     if not template_file.exists():
-        console.print(f"[red]Error:[/] Template '{name}' not found")
+        logger.error(f"Error: Template '{name}' not found")
         return
 
     with open(template_file, encoding="utf-8") as f:
@@ -198,7 +201,7 @@ def apply(name, model):
     # Fill template
     prompt = template_text.format(**values)
 
-    console.print("\n[bold blue]Generated prompt:[/]")
+    logger.info("\nGenerated prompt:")
     console.print(Panel(prompt, border_style="cyan"))
 
     # Generate response
@@ -214,24 +217,22 @@ def apply(name, model):
         console.print(Panel(response, title="[bold green]Response[/]", border_style="green"))
 
     except ImportError:
-        console.print("[red]Error:[/] langchain-llm-toolkit not installed")
+        logger.error("Error: langchain-llm-toolkit not installed")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e!s}")
+        logger.error(f"Error: {e!s}")
 
 
 @template.command()
 def builtin():
     """Show built-in template examples"""
-    console.print("[bold blue]Built-in Template Examples[/]")
+    logger.info("Built-in Template Examples")
 
     examples = [
         {
             "name": "code-review",
             "category": "development",
             "description": "Review code for improvements",
-            "template": (
-                "Please review the following {language} code and suggest improvements:\n\n{code}"
-            ),
+            "template": ("Please review the following {language} code and suggest improvements:\n\n{code}"),
             "variables": ["language", "code"],
         },
         {
@@ -245,9 +246,7 @@ def builtin():
             "name": "translate",
             "category": "language",
             "description": "Translate text",
-            "template": (
-                "Translate the following text from {source_lang} to {target_lang}:\n\n{text}"
-            ),
+            "template": ("Translate the following text from {source_lang} to {target_lang}:\n\n{text}"),
             "variables": ["source_lang", "target_lang", "text"],
         },
         {
@@ -269,9 +268,9 @@ def builtin():
 
     console.print(table)
 
-    console.print("\n[bold yellow]To create from example:[/]")
+    logger.info("\nTo create from example:")
     for example in examples:
-        console.print(f"[dim]lobster template create {example['name']}[/]")
+        logger.debug(f"lobster template create {example['name']}")
 
 
 def list_templates():
@@ -283,6 +282,9 @@ def list_templates():
             with open(template_file, encoding="utf-8") as f:
                 template_data = json.load(f)
                 templates.append(template_data)
+        except OSError:
+            pass
+
         except Exception:
             pass
 

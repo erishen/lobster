@@ -1,5 +1,6 @@
 """API Server 命令模块 - 供 OpenClaw 调用"""
 
+import logging
 import os
 import secrets
 
@@ -7,6 +8,8 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -85,9 +88,9 @@ def serve(host, port, reload, api_key, no_auth):
                 return api_key
 
             console.print(f"\n🔑 [bold yellow]API Key:[/] {current_api_key}")
-            console.print("[dim]请在请求头中添加 X-API-Key[/]")
+            logger.debug("请在请求头中添加 X-API-Key")
         else:
-            console.print("\n⚠️ [bold red]警告: 认证已禁用[/]")
+            logger.warning("\n 警告: 认证已禁用")
 
             async def verify_api_key():
                 return None
@@ -143,9 +146,7 @@ def serve(host, port, reload, api_key, no_auth):
             return result
 
         @app.post("/chat")
-        def chat_endpoint(
-            message: str, model: str = "ollama/gemma3", api_key: str = Depends(verify_api_key)
-        ):
+        def chat_endpoint(message: str, model: str = "ollama/gemma3", api_key: str = Depends(verify_api_key)):
             from lobster.core.llm_client import get_llm_client
 
             llm = get_llm_client(model)
@@ -237,8 +238,8 @@ def serve(host, port, reload, api_key, no_auth):
             return {"expired_count": expired}
 
         console.print("\n🌐 [bold green]API 服务器启动成功[/bold green]")
-        console.print(f"   地址: http://{host}:{port}")
-        console.print(f"   文档: http://{host}:{port}/docs")
+        logger.info(f" 地址: http://{host}:{port}")
+        logger.info(f" 文档: http://{host}:{port}/docs")
         console.print("\n📋 [bold]OpenClaw 集成端点:[/]")
         console.print("  GET  /tools              - 列出所有工具")
         console.print("  GET  /tools/openai       - OpenAI Function Calling 格式")
@@ -263,8 +264,8 @@ def serve(host, port, reload, api_key, no_auth):
         uvicorn.run(app, host=host, port=port, reload=reload)
 
     except ImportError:
-        console.print("[red]Error:[/] FastAPI or uvicorn not installed")
-        console.print("[yellow]Install with:[/] pip install fastapi uvicorn")
+        logger.error("Error: FastAPI or uvicorn not installed")
+        logger.info("Install with: pip install fastapi uvicorn")
 
 
 @api.command()
@@ -316,7 +317,7 @@ def docs():
     table2.add_row("POST", "/memory", "添加新记忆")
     table2.add_row("GET", "/search", "搜索记忆")
 
-    console.print(f"{table2}\n")
+    logger.info(f"{table2}\n")
 
     table3 = Table(title="统计端点")
     table3.add_column("方法", style="cyan", width=10)
@@ -327,7 +328,7 @@ def docs():
     table3.add_row("GET", "/stats/tools/{name}", "单个工具统计")
     table3.add_row("GET", "/stats/recent", "最近调用记录")
 
-    console.print(f"{table3}\n")
+    logger.info(f"{table3}\n")
 
     table4 = Table(title="缓存端点")
     table4.add_column("方法", style="cyan", width=10)
@@ -339,8 +340,8 @@ def docs():
     table4.add_row("POST", "/cache/clear", "清除缓存")
     table4.add_row("POST", "/cache/cleanup", "清理过期缓存")
 
-    console.print(f"{table4}\n")
-    console.print("使用 lobster api serve 启动服务器后访问完整文档")
+    logger.info(f"{table4}\n")
+    logger.info("使用 lobster api serve 启动服务器后访问完整文档")
 
 
 if __name__ == "__main__":

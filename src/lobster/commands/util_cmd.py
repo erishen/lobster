@@ -1,6 +1,7 @@
 """实用工具命令模块"""
 
 import hashlib
+import logging
 import shutil
 import zipfile
 from datetime import datetime
@@ -10,6 +11,8 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -58,7 +61,7 @@ def hash(file_path, output):
             f.write(f"MD5: {md5}\n")
             f.write(f"SHA1: {sha1}\n")
             f.write(f"SHA256: {sha256}\n")
-        console.print(f"✅ [bold green]已保存到: {output}[/bold green]\n")
+        logger.info(f" 已保存到: {output}\n")
 
 
 @util.command()
@@ -85,17 +88,15 @@ def compress(file_path, output):
                     zipf.write(file, file.relative_to(path))
 
     original_size = (
-        path.stat().st_size
-        if path.is_file()
-        else sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
+        path.stat().st_size if path.is_file() else sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
     )
     compressed_size = output_path.stat().st_size
     ratio = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
 
-    console.print("\n✅ [bold green]压缩完成[/bold green]")
-    console.print(f"📁 原始大小: {original_size / 1024:.2f} KB")
-    console.print(f"📦 压缩后: {compressed_size / 1024:.2f} KB")
-    console.print(f"📊 压缩率: {ratio:.1f}%\n")
+    logger.info("\n 压缩完成")
+    logger.info(f"📁 原始大小: {original_size / 1024:.2f} KB")
+    logger.info(f" 压缩后: {compressed_size / 1024:.2f} KB")
+    logger.info(f" 压缩率: {ratio:.1f}%\n")
 
 
 @util.command()
@@ -108,9 +109,7 @@ def backup(file_path, destination):
         lobster util backup data.txt backup/
         lobster util backup project/ backup/
     """
-    console.print(
-        Panel(f"💾 [bold cyan]备份: {file_path} -> {destination}[/bold cyan]", border_style="blue")
-    )
+    console.print(Panel(f"💾 [bold cyan]备份: {file_path} -> {destination}[/bold cyan]", border_style="blue"))
 
     src = Path(file_path)
     dst = Path(destination)
@@ -125,8 +124,8 @@ def backup(file_path, destination):
         backup_path = dst / f"{src.name}_{timestamp}"
         shutil.copytree(src, backup_path)
 
-    console.print("\n✅ [bold green]备份完成[/bold green]")
-    console.print(f"📁 备份位置: {backup_path}\n")
+    logger.info("\n 备份完成")
+    logger.info(f"📁 备份位置: {backup_path}\n")
 
 
 @util.command()
@@ -173,7 +172,7 @@ def head(file_path, lines):
         for i, line in enumerate(f, 1):
             if i > lines:
                 break
-            console.print(f"[dim]{i:4d}[/] {line.rstrip()}")
+            logger.debug(f"{i:4d} {line.rstrip()}")
 
     console.print()
 
@@ -194,7 +193,7 @@ def tail(file_path, lines):
         all_lines = f.readlines()
 
     for i, line in enumerate(all_lines[-lines:], len(all_lines) - lines + 1):
-        console.print(f"[dim]{i:4d}[/] {line.rstrip()}")
+        logger.debug(f"{i:4d} {line.rstrip()}")
 
     console.print()
 
@@ -215,7 +214,7 @@ def find(directory, pattern):
     files = list(dir_path.rglob(pattern))
 
     if not files:
-        console.print("\n❌ [bold red]没有找到文件[/bold red]\n")
+        logger.error("\n 没有找到文件\n")
         return
 
     # 显示结果
@@ -231,7 +230,7 @@ def find(directory, pattern):
     console.print(f"\n{table}\n")
 
     if len(files) > 50:
-        console.print(f"[dim]显示前 50 个文件，共 {len(files)} 个文件[/]\n")
+        logger.debug(f"显示前 50 个文件，共 {len(files)} 个文件\n")
 
 
 @util.command()
@@ -256,9 +255,9 @@ def clean_cache():
         if cache_dir.exists():
             shutil.rmtree(cache_dir)
             cleaned += 1
-            console.print(f"✓ 已删除: {cache_dir}")
+            logger.info(f" 已删除: {cache_dir}")
 
     if cleaned > 0:
-        console.print(f"\n✅ [bold green]已清理 {cleaned} 个缓存目录[/bold green]\n")
+        logger.info(f"\n 已清理 {cleaned} 个缓存目录\n")
     else:
-        console.print("\n✅ [bold green]没有缓存需要清理[/bold green]\n")
+        logger.info("\n 没有缓存需要清理\n")

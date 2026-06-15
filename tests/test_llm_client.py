@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from lobster.core.llm_client import (
     ConversationManager,
     EnhancedLLMClient,

@@ -1,9 +1,13 @@
 """API 客户端命令模块"""
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -35,8 +39,8 @@ def request(method, url, data, header, auth, form, output):
     try:
         import requests
     except ImportError:
-        console.print("[red]Error: requests 库未安装[/]")
-        console.print("[yellow]Install with:[/] pip install requests")
+        logger.error("Error: requests 库未安装")
+        logger.info("Install with: pip install requests")
         return
 
     headers = {}
@@ -72,29 +76,41 @@ def request(method, url, data, header, auth, form, output):
             response = requests.request(method, url, headers=headers, timeout=30)
 
         console.print("\n📊 [bold]响应:[/]")
-        console.print(f"   状态码: {response.status_code}")
-        console.print(f"   耗时: {response.elapsed.total_seconds():.2f}s")
+        logger.info(f" 状态码: {response.status_code}")
+        logger.info(f" 耗时: {response.elapsed.total_seconds():.2f}s")
 
         if response.headers.get("Content-Type", "").startswith("application/json"):
             try:
                 import json
 
-                console.print("\n📄 [bold]响应内容 (JSON):[/]")
-                console.print(json.dumps(response.json(), indent=2, ensure_ascii=False)[:2000])
+                logger.info("\n 响应内容 (JSON):")
+                logger.info(json.dumps(response.json(), indent=2, ensure_ascii=False)[:2000])
+            except requests.RequestException:
+                logger.info("\n 响应内容:")
+                logger.info(response.text[:2000])
+
+            except ValueError:
+                logger.info("\n 响应内容:")
+                logger.info(response.text[:2000])
+
+            except KeyError:
+                logger.info("\n 响应内容:")
+                logger.info(response.text[:2000])
+
             except Exception:
-                console.print("\n📄 [bold]响应内容:[/]")
-                console.print(response.text[:2000])
+                logger.info("\n 响应内容:")
+                logger.info(response.text[:2000])
         else:
-            console.print("\n📄 [bold]响应内容:[/]")
-            console.print(response.text[:2000])
+            logger.info("\n 响应内容:")
+            logger.info(response.text[:2000])
 
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 f.write(response.text)
-            console.print(f"\n✅ [green]响应已保存到: {output}[/]")
+            logger.info(f"\n 响应已保存到: {output}")
 
     except Exception as e:
-        console.print(f"\n❌ [red]请求失败: {e!s}[/]")
+        logger.error(f"\n 请求失败: {e!s}")
 
 
 @client.command()
@@ -109,8 +125,8 @@ def ping(url, interval, timeout):
         lobster client ping "https://api.example.com/health" --interval 30
     """
     console.print(Panel(f"🏓 [bold cyan]持续 Ping: {url}[/bold cyan]", border_style="blue"))
-    console.print(f"间隔: {interval} 秒, 超时: {timeout} 秒")
-    console.print("按 Ctrl+C 停止...\n")
+    logger.info(f"间隔: {interval} 秒, 超时: {timeout} 秒")
+    logger.info("按 Ctrl+C 停止...\n")
 
     try:
         import time
@@ -155,14 +171,14 @@ def ping(url, interval, timeout):
             time.sleep(interval)
 
     except KeyboardInterrupt:
-        console.print("\n[yellow]停止 Ping[/]")
+        logger.info("\n停止 Ping")
         console.print("\n📊 [bold]统计:[/]")
-        console.print(f"   总请求: {stats['total']}")
-        console.print(f"   成功: {stats['success']}")
-        console.print(f"   失败: {stats['failed']}")
+        logger.info(f" 总请求: {stats['total']}")
+        logger.info(f" 成功: {stats['success']}")
+        logger.error(f" 失败: {stats['failed']}")
 
     except ImportError:
-        console.print("[red]Error: requests 库未安装[/]")
+        logger.error("Error: requests 库未安装")
 
 
 @client.command()
@@ -173,12 +189,12 @@ def docs(url):
     示例:
         lobster client docs "https://api.example.com/openapi.json"
     """
-    console.print(f"📚 [bold]获取 API 文档: {url}[/]")
+    logger.info(f" 获取 API 文档: {url}")
 
     try:
         import requests
     except ImportError:
-        console.print("[red]Error: requests 库未安装[/]")
+        logger.error("Error: requests 库未安装")
         return
 
     try:
@@ -189,9 +205,9 @@ def docs(url):
                 spec = response.json()
 
                 if "openapi" in spec:
-                    console.print("\n✅ [green]OpenAPI 文档获取成功[/]")
-                    console.print(f"   版本: {spec.get('openapi')}")
-                    console.print(f"   标题: {spec.get('info', {}).get('title', 'N/A')}")
+                    logger.info("\n OpenAPI 文档获取成功")
+                    logger.info(f" 版本: {spec.get('openapi')}")
+                    logger.info(f" 标题: {spec.get('info', {}).get('title', 'N/A')}")
 
                     paths = spec.get("paths", {})
                     console.print(f"\n📋 [bold]可用端点 ({len(paths)}):[/]")
@@ -210,18 +226,27 @@ def docs(url):
                     console.print(table)
 
                 else:
-                    console.print("\n📄 [bold]响应内容:[/]")
-                    console.print(response.text[:2000])
+                    logger.info("\n 响应内容:")
+                    logger.info(response.text[:2000])
 
             except Exception:
-                console.print("\n📄 [bold]响应内容:[/]")
-                console.print(response.text[:2000])
+                logger.info("\n 响应内容:")
+                logger.info(response.text[:2000])
 
         else:
-            console.print(f"❌ [red]请求失败: {response.status_code}[/]")
+            logger.error(f" 请求失败: {response.status_code}")
+
+    except requests.RequestException as e:
+        logger.error(f" 错误: {e!s}")
+
+    except ValueError as e:
+        logger.error(f" 错误: {e!s}")
+
+    except KeyError as e:
+        logger.error(f" 错误: {e!s}")
 
     except Exception as e:
-        console.print(f"❌ [red]错误: {e!s}[/]")
+        logger.error(f" 错误: {e!s}")
 
 
 if __name__ == "__main__":

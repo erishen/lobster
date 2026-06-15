@@ -1,6 +1,7 @@
 """项目管理工具命令模块"""
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from rich.table import Table
 
 from lobster.core.config import ConfigManager
 from lobster.core.llm_client import get_llm_client
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -111,14 +114,14 @@ Thumbs.db
 """
     (project_dir / ".gitignore").write_text(gitignore_content, encoding="utf-8")
 
-    console.print(f"\n✅ [bold green]项目已创建: {name}[/bold green]")
-    console.print("📁 目录结构:")
-    console.print(f"  {name}/")
-    console.print("  ├── src/")
-    console.print("  ├── tests/")
-    console.print("  ├── docs/")
-    console.print("  ├── README.md")
-    console.print("  └── .gitignore\n")
+    logger.info(f"\n 项目已创建: {name}")
+    logger.info("📁 目录结构:")
+    logger.info(f" {name}/")
+    logger.info(" ├── src/")
+    logger.info(" ├── tests/")
+    logger.info(" ├── docs/")
+    logger.info(" ├── README.md")
+    logger.info(" └── .gitignore\n")
 
 
 @project.command()
@@ -207,7 +210,7 @@ def analyze(path, model):
         with console.status("[bold green]分析中...[/bold green]"):
             result = llm.generate(prompt)
 
-        console.print(f"\n💡 [bold green]项目分析:[/bold green]\n{result}\n")
+        logger.info(f"\n 项目分析:\n{result}\n")
 
 
 @project.command()
@@ -229,9 +232,7 @@ def report(path, model):
 
     # 收集项目信息
     readme_file = project_path / "README.md"
-    readme_content = (
-        readme_file.read_text(encoding="utf-8") if readme_file.exists() else "无 README"
-    )
+    readme_content = readme_file.read_text(encoding="utf-8") if readme_file.exists() else "无 README"
 
     code_lines = 0
     for file_path in project_path.rglob("*"):
@@ -264,7 +265,7 @@ README:
     with console.status("[bold green]生成报告中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]项目报告:[/bold green]\n{result}\n")
+    logger.info(f"\n 项目报告:\n{result}\n")
 
 
 @project.command()
@@ -287,7 +288,7 @@ def todo(path):
         todos = []
 
     if not todos:
-        console.print("\n✅ [bold green]没有待办事项[/bold green]\n")
+        logger.info("\n 没有待办事项\n")
         return
 
     # 显示待办事项
@@ -339,9 +340,9 @@ def add_todo(content, priority, path):
     with open(todo_file, "w", encoding="utf-8") as f:
         json.dump(todos, f, indent=2, ensure_ascii=False)
 
-    console.print("\n✅ [bold green]已添加待办事项[/bold green]")
-    console.print(f"📝 内容: {content}")
-    console.print(f"🎯 优先级: {priority}\n")
+    logger.info("\n 已添加待办事项")
+    logger.info(f" 内容: {content}")
+    logger.info(f" 优先级: {priority}\n")
 
 
 @project.command("done-todo")
@@ -359,7 +360,7 @@ def done_todo(todo_id, path):
     todo_file = project_path / ".lobster_todo.json"
 
     if not todo_file.exists():
-        console.print("\n❌ [bold red]没有待办事项[/bold red]\n")
+        logger.error("\n 没有待办事项\n")
         return
 
     with open(todo_file, encoding="utf-8") as f:
@@ -372,6 +373,6 @@ def done_todo(todo_id, path):
         with open(todo_file, "w", encoding="utf-8") as f:
             json.dump(todos, f, indent=2, ensure_ascii=False)
 
-        console.print(f"\n✅ [bold green]已完成待办事项 #{todo_id}[/bold green]\n")
+        logger.info(f"\n 已完成待办事项 #{todo_id}\n")
     else:
-        console.print("\n❌ [bold red]无效的待办事项 ID[/bold red]\n")
+        logger.error("\n 无效的待办事项 ID\n")

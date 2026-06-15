@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import requests
+
 if TYPE_CHECKING:
     from lobster.core.tools import ToolRegistry
 
@@ -142,6 +144,12 @@ class SerenaClient:
             tool = self._get_tool(tool_class)
             result = self._agent.execute_task(lambda: tool.apply(**kwargs))
             return json.loads(result)
+        except requests.RequestException as e:
+            return {"error": str(e)}
+
+        except ValueError as e:
+            return {"error": str(e)}
+
         except Exception as e:
             return {"error": str(e)}
 
@@ -343,9 +351,7 @@ def register_serena_tools(registry: ToolRegistry):
                 },
                 "required": ["project_path"],
             },
-            handler=lambda project_path, language_backend="LSP": client.initialize(
-                project_path, language_backend
-            ),
+            handler=lambda project_path, language_backend="LSP": client.initialize(project_path, language_backend),
             category="serena",
         )
     )
@@ -383,9 +389,7 @@ def register_serena_tools(registry: ToolRegistry):
                 },
                 "required": ["relative_path"],
             },
-            handler=lambda relative_path, depth=0: client.get_symbols_overview(
-                relative_path, depth
-            ),
+            handler=lambda relative_path, depth=0: client.get_symbols_overview(relative_path, depth),
             category="serena",
         )
     )
@@ -418,8 +422,8 @@ def register_serena_tools(registry: ToolRegistry):
                 },
                 "required": ["name_path_pattern"],
             },
-            handler=lambda name_path_pattern, relative_path=None, depth=0, include_body=False: (
-                client.find_symbol(name_path_pattern, relative_path, depth, include_body)
+            handler=lambda name_path_pattern, relative_path=None, depth=0, include_body=False: client.find_symbol(
+                name_path_pattern, relative_path, depth, include_body
             ),
             category="serena",
         )
@@ -443,9 +447,7 @@ def register_serena_tools(registry: ToolRegistry):
                 },
                 "required": ["name_path", "relative_path"],
             },
-            handler=lambda name_path, relative_path: client.find_referencing_symbols(
-                name_path, relative_path
-            ),
+            handler=lambda name_path, relative_path: client.find_referencing_symbols(name_path, relative_path),
             category="serena",
         )
     )
@@ -546,9 +548,7 @@ def register_serena_tools(registry: ToolRegistry):
                 },
                 "required": ["name_path", "new_name", "relative_path"],
             },
-            handler=lambda name_path, new_name, relative_path: client.rename_symbol(
-                name_path, new_name, relative_path
-            ),
+            handler=lambda name_path, new_name, relative_path: client.rename_symbol(name_path, new_name, relative_path),
             category="serena",
         )
     )
@@ -575,9 +575,7 @@ def register_serena_tools(registry: ToolRegistry):
                 },
                 "required": ["name_path", "body", "relative_path"],
             },
-            handler=lambda name_path, body, relative_path: client.replace_symbol_body(
-                name_path, body, relative_path
-            ),
+            handler=lambda name_path, body, relative_path: client.replace_symbol_body(name_path, body, relative_path),
             category="serena",
         )
     )

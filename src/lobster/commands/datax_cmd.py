@@ -1,12 +1,16 @@
 """导出/导入命令模块"""
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 import click
+import requests
 from rich.console import Console
 from rich.panel import Panel
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -31,7 +35,7 @@ def export(memories, history, config, all, output):
         lobster datax export --memories -o backup.json
     """
     if not any([memories, history, config, all]):
-        console.print("[yellow]请指定导出内容: --memories, --history, --config 或 --all[/]")
+        logger.info("请指定导出内容: --memories, --history, --config 或 --all")
         return
 
     if output:
@@ -40,9 +44,7 @@ def export(memories, history, config, all, output):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_path = Path(f"lobster_backup_{timestamp}.json")
 
-    console.print(
-        Panel(f"📤 [bold cyan]导出数据到: {output_path}[/bold cyan]", border_style="blue")
-    )
+    console.print(Panel(f"📤 [bold cyan]导出数据到: {output_path}[/bold cyan]", border_style="blue"))
 
     export_data = {
         "version": "1.0",
@@ -56,9 +58,12 @@ def export(memories, history, config, all, output):
             memory = EnhancedMemoryManager()
             memories = memory.list_memories()
             export_data["memories"] = memories
-            console.print(f"✅ 导出 {len(memories)} 条记忆")
+            logger.info(f" 导出 {len(memories)} 条记忆")
+        except KeyError as e:
+            logger.error(f"导出记忆失败: {e!s}")
+
         except Exception as e:
-            console.print(f"[red]导出记忆失败: {e!s}[/]")
+            logger.error(f"导出记忆失败: {e!s}")
 
     if all or history:
         try:
@@ -66,9 +71,12 @@ def export(memories, history, config, all, output):
 
             conversations = load_conversations()
             export_data["conversations"] = conversations
-            console.print(f"✅ 导出 {len(conversations)} 条对话历史")
+            logger.info(f" 导出 {len(conversations)} 条对话历史")
+        except KeyError as e:
+            logger.error(f"导出历史失败: {e!s}")
+
         except Exception as e:
-            console.print(f"[red]导出历史失败: {e!s}[/]")
+            logger.error(f"导出历史失败: {e!s}")
 
     if all or config:
         try:
@@ -76,14 +84,17 @@ def export(memories, history, config, all, output):
 
             config_mgr = ConfigManager()
             export_data["config"] = config_mgr.config.model_dump()
-            console.print("✅ 导出配置")
+            logger.info(" 导出配置")
+        except KeyError as e:
+            logger.error(f"导出配置失败: {e!s}")
+
         except Exception as e:
-            console.print(f"[red]导出配置失败: {e!s}[/]")
+            logger.error(f"导出配置失败: {e!s}")
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-    console.print(f"\n✅ [bold green]导出完成: {output_path}[/]")
+    logger.info(f"\n 导出完成: {output_path}")
 
 
 @datax.command()
@@ -102,7 +113,7 @@ def import_data(file_path, memories, history, config, all, merge, replace):
         lobster datax import backup.json --memories
     """
     if not any([memories, history, config, all]):
-        console.print("[yellow]请指定导入内容: --memories, --history, --config 或 --all[/]")
+        logger.info("请指定导入内容: --memories, --history, --config 或 --all")
         return
 
     console.print(Panel(f"📥 [bold cyan]从 {file_path} 导入数据[/bold cyan]", border_style="blue"))
@@ -111,7 +122,7 @@ def import_data(file_path, memories, history, config, all, merge, replace):
         import_data = json.load(f)
 
     if replace:
-        console.print("[yellow]警告: 将替换现有数据![/]")
+        logger.warning("警告: 将替换现有数据!")
 
     if all or memories:
         if "memories" in import_data:
@@ -132,11 +143,17 @@ def import_data(file_path, memories, history, config, all, merge, replace):
                     )
                     count += 1
 
-                console.print(f"✅ 导入 {count} 条记忆")
+                logger.info(f" 导入 {count} 条记忆")
+            except requests.RequestException as e:
+                logger.error(f"导入记忆失败: {e!s}")
+
+            except KeyError as e:
+                logger.error(f"导入记忆失败: {e!s}")
+
             except Exception as e:
-                console.print(f"[red]导入记忆失败: {e!s}[/]")
+                logger.error(f"导入记忆失败: {e!s}")
         else:
-            console.print("[yellow]文件中没有记忆数据[/]")
+            logger.info("文件中没有记忆数据")
 
     if all or config:
         if "config" in import_data:
@@ -147,13 +164,16 @@ def import_data(file_path, memories, history, config, all, merge, replace):
                 for key, value in import_data["config"].items():
                     config_mgr.set(key, value)
 
-                console.print("✅ 导入配置")
-            except Exception as e:
-                console.print(f"[red]导入配置失败: {e!s}[/]")
-        else:
-            console.print("[yellow]文件中没有配置数据[/]")
+                logger.info(" 导入配置")
+            except KeyError as e:
+                logger.error(f"导入配置失败: {e!s}")
 
-    console.print("\n✅ [bold green]导入完成[/]")
+            except Exception as e:
+                logger.error(f"导入配置失败: {e!s}")
+        else:
+            logger.info("文件中没有配置数据")
+
+    logger.info("\n 导入完成")
 
 
 @datax.command()
@@ -177,22 +197,28 @@ def backup():
 
         memory = EnhancedMemoryManager()
         export_data["memories"] = memory.list_memories()
-        console.print(f"✅ 记忆: {len(export_data['memories'])} 条")
+        logger.info(f" 记忆: {len(export_data['memories'])} 条")
+    except KeyError as e:
+        logger.error(f"备份记忆失败: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]备份记忆失败: {e!s}[/]")
+        logger.error(f"备份记忆失败: {e!s}")
 
     try:
         from lobster.commands.history import load_conversations
 
         export_data["conversations"] = load_conversations()
-        console.print(f"✅ 对话: {len(export_data['conversations'])} 条")
+        logger.info(f" 对话: {len(export_data['conversations'])} 条")
+    except KeyError as e:
+        logger.error(f"备份对话失败: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]备份对话失败: {e!s}[/]")
+        logger.error(f"备份对话失败: {e!s}")
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-    console.print(f"\n✅ [bold green]备份完成: {output_path}[/]")
+    logger.info(f"\n 备份完成: {output_path}")
 
 
 @datax.command()
@@ -203,7 +229,7 @@ def restore(backup_file):
     从备份文件恢复所有数据
     """
     console.print(Panel(f"♻️ [bold cyan]从 {backup_file} 恢复数据[/bold cyan]", border_style="blue"))
-    console.print("[yellow]注意: 此操作将替换所有现有数据![/]\n")
+    logger.warning("注意: 此操作将替换所有现有数据!\n")
 
     with open(backup_file, encoding="utf-8") as f:
         import_data = json.load(f)
@@ -221,11 +247,14 @@ def restore(backup_file):
                 category=mem.get("metadata", {}).get("category", "general"),
             )
 
-        console.print(f"✅ 恢复 {len(import_data.get('memories', []))} 条记忆")
-    except Exception as e:
-        console.print(f"[red]恢复记忆失败: {e!s}[/]")
+        logger.info(f" 恢复 {len(import_data.get('memories', []))} 条记忆")
+    except requests.RequestException as e:
+        logger.error(f"恢复记忆失败: {e!s}")
 
-    console.print("\n✅ [bold green]恢复完成[/]")
+    except Exception as e:
+        logger.error(f"恢复记忆失败: {e!s}")
+
+    logger.info("\n 恢复完成")
 
 
 if __name__ == "__main__":

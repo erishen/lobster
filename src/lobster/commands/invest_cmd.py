@@ -3,10 +3,14 @@ Investment Commands for Lobster CLI.
 投资相关命令 - 股票信号、投资组合分析
 """
 
+import logging
+
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -27,17 +31,17 @@ def signals(top: int, min_confidence: float):
 
         response = requests.get("http://localhost:8000/api/ml/signals", timeout=10)
         if response.status_code != 200:
-            console.print("[red]Error:[/] 无法连接到 Asset Lens API")
-            console.print("[yellow]请确保 Asset Lens 服务正在运行:[/] asset-lens serve")
+            logger.error("Error: 无法连接到 Asset Lens API")
+            logger.info("请确保 Asset Lens 服务正在运行: asset-lens serve")
             return
 
         data = response.json()
         signals_list = data.get("signals", [])
 
         if not signals_list:
-            console.print("[yellow]暂无预测信号[/]")
+            logger.info("暂无预测信号")
             if data.get("model_status") != "loaded":
-                console.print("[dim]提示: 模型未加载，请先训练模型[/]")
+                logger.debug("提示: 模型未加载，请先训练模型")
             return
 
         filtered = [s for s in signals_list if s.get("confidence", 0) >= min_confidence]
@@ -57,9 +61,7 @@ def signals(top: int, min_confidence: float):
             pred_text = "📈 看涨" if prediction == "up" else "📉 看跌"
 
             strength = s.get("signal_strength", "weak")
-            strength_style = (
-                "green" if strength == "strong" else "yellow" if strength == "medium" else "dim"
-            )
+            strength_style = "green" if strength == "strong" else "yellow" if strength == "medium" else "dim"
 
             table.add_row(
                 s.get("code", ""),
@@ -71,15 +73,19 @@ def signals(top: int, min_confidence: float):
             )
 
         console.print(table)
-        console.print(
-            f"\n[dim]共 {len(filtered)} 个信号 | 模型状态: {data.get('model_status', 'unknown')}[/]"
-        )
+        console.print(f"\n[dim]共 {len(filtered)} 个信号 | 模型状态: {data.get('model_status', 'unknown')}[/]")
 
     except ImportError:
-        console.print("[red]Error:[/] requests 未安装")
-        console.print("[yellow]安装:[/] pip install requests")
+        logger.error("Error: requests 未安装")
+        logger.info("安装: pip install requests")
+    except requests.RequestException as e:
+        logger.error(f"Error: {e}")
+
+    except ValueError as e:
+        logger.error(f"Error: {e}")
+
     except Exception as e:
-        console.print(f"[red]Error:[/] {e}")
+        logger.error(f"Error: {e}")
 
 
 @invest.command()
@@ -91,8 +97,8 @@ def portfolio(detailed: bool):
 
         response = requests.get("http://localhost:8000/api/portfolio/summary", timeout=10)
         if response.status_code != 200:
-            console.print("[red]Error:[/] 无法连接到 Asset Lens API")
-            console.print("[yellow]请确保 Asset Lens 服务正在运行:[/] asset-lens serve")
+            logger.error("Error: 无法连接到 Asset Lens API")
+            logger.info("请确保 Asset Lens 服务正在运行: asset-lens serve")
             return
 
         data = response.json()
@@ -142,10 +148,10 @@ def portfolio(detailed: bool):
                     console.print(table)
 
     except ImportError:
-        console.print("[red]Error:[/] requests 未安装")
-        console.print("[yellow]安装:[/] pip install requests")
+        logger.error("Error: requests 未安装")
+        logger.info("安装: pip install requests")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e}")
+        logger.error(f"Error: {e}")
 
 
 @invest.command()
@@ -156,15 +162,15 @@ def risk():
 
         response = requests.get("http://localhost:8000/api/risk/alerts", timeout=10)
         if response.status_code != 200:
-            console.print("[red]Error:[/] 无法连接到 Asset Lens API")
-            console.print("[yellow]请确保 Asset Lens 服务正在运行:[/] asset-lens serve")
+            logger.error("Error: 无法连接到 Asset Lens API")
+            logger.info("请确保 Asset Lens 服务正在运行: asset-lens serve")
             return
 
         data = response.json()
         alerts = data.get("alerts", [])
 
         if not alerts:
-            console.print("[green]✅ 暂无风险预警[/]")
+            logger.info(" 暂无风险预警")
             return
 
         table = Table(title="风险预警")
@@ -188,10 +194,10 @@ def risk():
         console.print(table)
 
     except ImportError:
-        console.print("[red]Error:[/] requests 未安装")
-        console.print("[yellow]安装:[/] pip install requests")
+        logger.error("Error: requests 未安装")
+        logger.info("安装: pip install requests")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e}")
+        logger.error(f"Error: {e}")
 
 
 @invest.command()
@@ -203,16 +209,16 @@ def signal(code: str):
 
         response = requests.get(f"http://localhost:8000/api/ml/signal/{code}", timeout=10)
         if response.status_code != 200:
-            console.print("[red]Error:[/] 无法连接到 Asset Lens API")
+            logger.error("Error: 无法连接到 Asset Lens API")
             return
 
         data = response.json()
         signal_data = data.get("signal")
 
         if not signal_data:
-            console.print(f"[yellow]无法获取 {code} 的预测信号[/]")
+            logger.error(f"无法获取 {code} 的预测信号")
             if data.get("message"):
-                console.print(f"[dim]{data.get('message')}[/]")
+                logger.debug(f"{data.get('message')}")
             return
 
         prediction = signal_data.get("prediction", "")
@@ -236,10 +242,10 @@ def signal(code: str):
         )
 
     except ImportError:
-        console.print("[red]Error:[/] requests 未安装")
-        console.print("[yellow]安装:[/] pip install requests")
+        logger.error("Error: requests 未安装")
+        logger.info("安装: pip install requests")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e}")
+        logger.error(f"Error: {e}")
 
 
 @invest.command()
@@ -250,14 +256,14 @@ def market():
 
         response = requests.get("http://localhost:8000/api/market/indexes", timeout=10)
         if response.status_code != 200:
-            console.print("[red]Error:[/] 无法连接到 Asset Lens API")
+            logger.error("Error: 无法连接到 Asset Lens API")
             return
 
         data = response.json()
         indexes = data.get("indexes", [])
 
         if not indexes:
-            console.print("[yellow]暂无市场数据[/]")
+            logger.info("暂无市场数据")
             return
 
         table = Table(title="市场行情")
@@ -280,7 +286,7 @@ def market():
         console.print(table)
 
     except ImportError:
-        console.print("[red]Error:[/] requests 未安装")
-        console.print("[yellow]安装:[/] pip install requests")
+        logger.error("Error: requests 未安装")
+        logger.info("安装: pip install requests")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e}")
+        logger.error(f"Error: {e}")

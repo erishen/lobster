@@ -1,10 +1,14 @@
 """Model management commands for Ollama models"""
 
+import logging
+
 import click
 import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -28,7 +32,7 @@ def list():
         models = data.get("models", [])
 
         if not models:
-            console.print("[yellow]No models installed[/]")
+            logger.info("No models installed")
             return
 
         table = Table(title="Installed Ollama Models")
@@ -44,9 +48,7 @@ def list():
             model_id = model.get("digest", "unknown")[:12]
 
             size_str = (
-                f"{size / 1024 / 1024 / 1024:.2f} GB"
-                if size > 1024 * 1024 * 1024
-                else f"{size / 1024 / 1024:.2f} MB"
+                f"{size / 1024 / 1024 / 1024:.2f} GB" if size > 1024 * 1024 * 1024 else f"{size / 1024 / 1024:.2f} MB"
             )
 
             table.add_row(name, size_str, modified[:10], model_id)
@@ -54,40 +56,45 @@ def list():
         console.print(table)
 
         total_size = sum(m.get("size", 0) for m in models)
-        console.print(
-            f"\n[dim]Total: {len(models)} models, {total_size / 1024 / 1024 / 1024:.2f} GB[/]"
-        )
+        console.print(f"\n[dim]Total: {len(models)} models, {total_size / 1024 / 1024 / 1024:.2f} GB[/]")
 
     except requests.exceptions.ConnectionError:
-        console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
-        console.print("[yellow]Start Ollama with:[/] ollama serve")
+        logger.error("Error: Cannot connect to Ollama. Is it running?")
+        logger.info("Start Ollama with: ollama serve")
+    except requests.RequestException as e:
+        logger.error(f"Error: {e!s}")
+
+    except ValueError as e:
+        logger.error(f"Error: {e!s}")
+
+    except KeyError as e:
+        logger.error(f"Error: {e!s}")
+
     except Exception as e:
-        console.print(f"[red]Error:[/] {e!s}")
+        logger.error(f"Error: {e!s}")
 
 
 @model.command()
 @click.argument("model_name")
 def pull(model_name):
     """Pull a model from Ollama registry"""
-    console.print(f"[bold blue]Pulling model:[/] {model_name}")
-    console.print("[dim]This may take a while...[/]")
+    logger.info(f"Pulling model: {model_name}")
+    logger.debug("This may take a while...")
 
     try:
-        response = requests.post(
-            f"{OLLAMA_BASE_URL}/api/pull", json={"name": model_name}, stream=True, timeout=300
-        )
+        response = requests.post(f"{OLLAMA_BASE_URL}/api/pull", json={"name": model_name}, stream=True, timeout=300)
 
         for line in response.iter_lines():
             if line:
                 data = line.decode("utf-8")
-                console.print(f"[dim]{data}[/]")
+                logger.debug(f"{data}")
 
-        console.print(f"[green]✓[/] Model {model_name} pulled successfully")
+        logger.info(f" Model {model_name} pulled successfully")
 
     except requests.exceptions.ConnectionError:
-        console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
+        logger.error("Error: Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error pulling model:[/] {e!s}")
+        logger.error(f"Error pulling model: {e!s}")
 
 
 @model.command()
@@ -95,23 +102,21 @@ def pull(model_name):
 def rm(model_name):
     """Remove a model"""
     if not click.confirm(f"Are you sure you want to remove model '{model_name}'?"):
-        console.print("[yellow]Cancelled[/]")
+        logger.info("Cancelled")
         return
 
     try:
-        response = requests.delete(
-            f"{OLLAMA_BASE_URL}/api/delete", json={"name": model_name}, timeout=10
-        )
+        response = requests.delete(f"{OLLAMA_BASE_URL}/api/delete", json={"name": model_name}, timeout=10)
 
         if response.status_code == 200:
-            console.print(f"[green]✓[/] Model {model_name} removed successfully")
+            logger.info(f" Model {model_name} removed successfully")
         else:
-            console.print("[red]Error:[/] Failed to remove model")
+            logger.error("Error: Failed to remove model")
 
     except requests.exceptions.ConnectionError:
-        console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
+        logger.error("Error: Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error removing model:[/] {e!s}")
+        logger.error(f"Error removing model: {e!s}")
 
 
 @model.command()
@@ -119,9 +124,7 @@ def rm(model_name):
 def info(model_name):
     """Show model information"""
     try:
-        response = requests.post(
-            f"{OLLAMA_BASE_URL}/api/show", json={"name": model_name}, timeout=10
-        )
+        response = requests.post(f"{OLLAMA_BASE_URL}/api/show", json={"name": model_name}, timeout=10)
 
         if response.status_code == 200:
             data = response.json()
@@ -137,16 +140,16 @@ def info(model_name):
             )
 
             if "parameters" in data:
-                console.print("\n[bold magenta]Parameters:[/]")
-                console.print(data["parameters"])
+                logger.info("\nParameters:")
+                logger.info(data["parameters"])
 
         else:
-            console.print("[red]Error:[/] Model not found")
+            logger.error("Error: Model not found")
 
     except requests.exceptions.ConnectionError:
-        console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
+        logger.error("Error: Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error getting model info:[/] {e!s}")
+        logger.error(f"Error getting model info: {e!s}")
 
 
 @model.command()
@@ -163,14 +166,14 @@ def copy(model_name):
         )
 
         if response.status_code == 200:
-            console.print(f"[green]✓[/] Model copied from {model_name} to {new_name}")
+            logger.info(f" Model copied from {model_name} to {new_name}")
         else:
-            console.print("[red]Error:[/] Failed to copy model")
+            logger.error("Error: Failed to copy model")
 
     except requests.exceptions.ConnectionError:
-        console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
+        logger.error("Error: Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error copying model:[/] {e!s}")
+        logger.error(f"Error copying model: {e!s}")
 
 
 @model.command()
@@ -184,7 +187,7 @@ def ps():
         models = data.get("models", [])
 
         if not models:
-            console.print("[yellow]No models currently running[/]")
+            logger.info("No models currently running")
             return
 
         table = Table(title="Running Models")
@@ -200,14 +203,10 @@ def ps():
             until = model.get("expires_at", "unknown")
 
             size_str = (
-                f"{size / 1024 / 1024 / 1024:.2f} GB"
-                if size > 1024 * 1024 * 1024
-                else f"{size / 1024 / 1024:.2f} MB"
+                f"{size / 1024 / 1024 / 1024:.2f} GB" if size > 1024 * 1024 * 1024 else f"{size / 1024 / 1024:.2f} MB"
             )
             vram_str = (
-                f"{vram / 1024 / 1024 / 1024:.2f} GB"
-                if vram > 1024 * 1024 * 1024
-                else f"{vram / 1024 / 1024:.2f} MB"
+                f"{vram / 1024 / 1024 / 1024:.2f} GB" if vram > 1024 * 1024 * 1024 else f"{vram / 1024 / 1024:.2f} MB"
             )
 
             table.add_row(name, size_str, vram_str, until[:19] if until != "unknown" else until)
@@ -215,15 +214,15 @@ def ps():
         console.print(table)
 
     except requests.exceptions.ConnectionError:
-        console.print("[red]Error:[/] Cannot connect to Ollama. Is it running?")
+        logger.error("Error: Cannot connect to Ollama. Is it running?")
     except Exception as e:
-        console.print(f"[red]Error:[/] {e!s}")
+        logger.error(f"Error: {e!s}")
 
 
 @model.command()
 def popular():
     """Show popular Ollama models"""
-    console.print("[bold blue]Popular Ollama Models[/]")
+    logger.info("Popular Ollama Models")
 
     table = Table(title="Recommended Models")
     table.add_column("Model", style="cyan")
@@ -246,5 +245,5 @@ def popular():
 
     console.print(table)
 
-    console.print("\n[bold yellow]To pull a model:[/] lobster model pull <model-name>")
-    console.print("[dim]Example: lobster model pull llama3.1:8b[/]")
+    logger.info("\nTo pull a model: lobster model pull <model-name>")
+    logger.debug("Example: lobster model pull llama3.1:8b")

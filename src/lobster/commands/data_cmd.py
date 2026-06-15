@@ -1,6 +1,7 @@
 """数据分析工具命令模块"""
 
 import json
+import logging
 from pathlib import Path
 
 import click
@@ -10,6 +11,8 @@ from rich.table import Table
 
 from lobster.core.config import ConfigManager
 from lobster.core.llm_client import get_llm_client
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -41,7 +44,7 @@ def analyze(file_path, model):
 
     # 显示文件信息
     file_size = Path(file_path).stat().st_size
-    console.print(f"\n📁 文件大小: {file_size / 1024:.2f} KB")
+    logger.info(f"\n📁 文件大小: {file_size / 1024:.2f} KB")
 
     llm = get_llm_client(model)
 
@@ -62,7 +65,7 @@ def analyze(file_path, model):
     with console.status("[bold green]分析中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]分析结果:[/bold green]\n{result}\n")
+    logger.info(f"\n 分析结果:\n{result}\n")
 
 
 @data.command()
@@ -102,7 +105,7 @@ def stats(file_path, output):
             f.write(f"总行数: {len(lines)}\n")
             f.write(f"总词数: {len(words)}\n")
             f.write(f"总字符数: {chars}\n")
-        console.print(f"✅ [bold green]已保存到: {output}[/bold green]\n")
+        logger.info(f" 已保存到: {output}\n")
 
 
 @data.command()
@@ -151,9 +154,9 @@ def convert(file_path, output_format, output):
     if output:
         with open(output, "w", encoding="utf-8") as f:
             f.write(result)
-        console.print(f"✅ [bold green]已保存到: {output}[/bold green]\n")
+        logger.info(f" 已保存到: {output}\n")
     else:
-        console.print(f"\n💡 [bold green]转换结果:[/bold green]\n{result}\n")
+        logger.info(f"\n 转换结果:\n{result}\n")
 
 
 @data.command()
@@ -192,7 +195,7 @@ def clean(file_path, model):
     with console.status("[bold green]清洗中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]清洗结果:[/bold green]\n{result}\n")
+    logger.info(f"\n 清洗结果:\n{result}\n")
 
 
 @data.command()
@@ -232,4 +235,4 @@ def summarize(file_path, model):
     with console.status("[bold green]生成摘要中...[/bold green]"):
         result = llm.generate(prompt)
 
-    console.print(f"\n💡 [bold green]数据摘要:[/bold green]\n{result}\n")
+    logger.info(f"\n 数据摘要:\n{result}\n")
