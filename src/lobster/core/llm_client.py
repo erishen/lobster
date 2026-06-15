@@ -3,11 +3,12 @@
 import hashlib
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import litellm
+import requests
 from rich.console import Console
 
 logger = logging.getLogger(__name__)
@@ -164,6 +165,8 @@ class EnhancedLLMClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.max_retries = max_retries
+        self.api_url = os.environ.get("LLM_API_URL", "https://langchain-llm-toolkit.onrender.com")
+        self.api_key = os.environ.get("LLM_API_KEY", "")
 
         # 对话管理
         self.conversation = ConversationManager()
@@ -205,14 +208,22 @@ class EnhancedLLMClient:
         # 重试机制
         for attempt in range(self.max_retries):
             try:
-                response = litellm.completion(
-                    model=self.model,
-                    messages=messages,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens,
+                response = requests.post(
+                    f"{self.api_url}/api/v1/chat",
+                    headers={"X-API-Key": self.api_key, "Content-Type": "application/json"},
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "temperature": self.temperature,
+                        "max_tokens": self.max_tokens,
+                    },
+                    timeout=30,
                 )
 
-                result = response.choices[0].message.content
+                if response.status_code != 200:
+                    raise RuntimeError(f"API 错误: {response.status_code} {response.text[:200]}")
+
+                result = response.json().get("response", "")
 
                 # 保存缓存
                 if self.enable_cache and use_cache:
@@ -238,17 +249,22 @@ class EnhancedLLMClient:
         messages.append({"role": "user", "content": prompt})
 
         try:
-            response = litellm.completion(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                stream=True,
+            response = requests.post(
+                f"{self.api_url}/api/v1/chat",
+                headers={"X-API-Key": self.api_key, "Content-Type": "application/json"},
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "temperature": self.temperature,
+                    "max_tokens": self.max_tokens,
+                },
+                timeout=30,
             )
 
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+            if response.status_code == 200:
+                yield response.json().get("response", "")
+            else:
+                yield f"错误: API {response.status_code}"
 
         except Exception as e:
             yield f"错误: {e!s}"
@@ -276,14 +292,22 @@ class EnhancedLLMClient:
 
         # 调用 LLM
         try:
-            response = litellm.completion(
-                model=self.model,
-                messages=self.conversation.get_messages(),
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
+            response = requests.post(
+                f"{self.api_url}/api/v1/chat",
+                headers={"X-API-Key": self.api_key, "Content-Type": "application/json"},
+                json={
+                    "model": self.model,
+                    "messages": self.conversation.get_messages(),
+                    "temperature": self.temperature,
+                    "max_tokens": self.max_tokens,
+                },
+                timeout=30,
             )
 
-            assistant_message = response.choices[0].message.content
+            if response.status_code != 200:
+                raise RuntimeError(f"API 错误: {response.status_code}")
+
+            assistant_message = response.json().get("response", "")
 
             # 添加助手消息
             self.conversation.add_message("assistant", assistant_message)
@@ -345,9 +369,5 @@ LLMClient = EnhancedLLMClient
 
 def get_llm_client(model: str | None = None, **kwargs) -> EnhancedLLMClient:
     """获取 LLM 客户端"""
-    from lobster.core.config import ConfigManager
-
-    config = ConfigManager()
-    default_model = model or config.get("default_model", "ollama/gemma3")
-
+    default_model = model or os.environ.get("AI_MODEL", "deepseek-chat")
     return EnhancedLLMClient(model=default_model, **kwargs)

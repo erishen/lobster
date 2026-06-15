@@ -13,7 +13,12 @@ logger = logging.getLogger(__name__)
 
 console = Console()
 
-RAG_API_URL = os.environ.get("RAG_API_URL", "http://localhost:8000")
+RAG_API_URL = os.environ.get("RAG_API_URL", "https://langchain-llm-toolkit.onrender.com")
+RAG_API_KEY = os.environ.get("LLM_API_KEY", "")
+
+
+def _build_headers() -> dict:
+    return {"X-API-Key": RAG_API_KEY}
 
 
 @click.group()
@@ -38,7 +43,7 @@ def status():
             logger.info(f" API 文档: {RAG_API_URL}/docs")
 
             try:
-                info_response = requests.get(f"{RAG_API_URL}/api/v1/rag/info", timeout=5)
+                info_response = requests.get(f"{RAG_API_URL}/api/v1/rag/info", headers=_build_headers(), timeout=5)
                 if info_response.status_code == 200:
                     info = info_response.json()
                     logger.info(f" 状态: {info.get('status', 'unknown')}")
@@ -89,6 +94,7 @@ def ask(query, top_k, model):
 
             response = requests.post(
                 f"{RAG_API_URL}/api/v1/rag/query",
+                headers=_build_headers(),
                 json={"query": query, "k": top_k},
                 timeout=60,
             )
@@ -152,6 +158,7 @@ def upload(file_path):
             with open(file_path, "rb") as f:
                 response = requests.post(
                     f"{RAG_API_URL}/api/v1/rag/upload",
+                    headers=_build_headers(),
                     files={"file": (filename, f)},
                     timeout=120,
                 )
@@ -187,7 +194,7 @@ def clear():
     try:
         import requests
 
-        response = requests.delete(f"{RAG_API_URL}/api/v1/rag/clear", timeout=30)
+        response = requests.delete(f"{RAG_API_URL}/api/v1/rag/clear", headers=_build_headers(), timeout=30)
 
         if response.status_code == 200:
             logger.info(" 知识库已清空")
@@ -208,7 +215,7 @@ def models():
     try:
         import requests
 
-        response = requests.get(f"{RAG_API_URL}/api/v1/models", timeout=10)
+        response = requests.get(f"{RAG_API_URL}/api/v1/models", headers=_build_headers(), timeout=10)
 
         if response.status_code == 200:
             result = response.json()
@@ -260,6 +267,7 @@ def generate(prompt, model):
 
             response = requests.post(
                 f"{RAG_API_URL}/api/v1/generate",
+                headers=_build_headers(),
                 json={"prompt": prompt, "model": model},
                 timeout=60,
             )
