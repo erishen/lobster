@@ -29,7 +29,7 @@ def init_session_state():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "model" not in st.session_state:
-        st.session_state.model = "ollama/gemma3"
+        st.session_state.model = "ollama/llama3.1:8b"
     if "with_memory" not in st.session_state:
         st.session_state.with_memory = False
     if "llm" not in st.session_state:
@@ -62,7 +62,7 @@ def get_available_models():
 
     except Exception:
         pass
-    return ["ollama/gemma3", "ollama/llama3.1:8b", "ollama/deepseek-r1:7b"]
+    return ["ollama/llama3.1:8b", "ollama/gemma4", "ollama/deepseek-r1:7b"]
 
 
 def chat_page():
@@ -96,9 +96,9 @@ def chat_page():
                 if st.session_state.llm is None:
                     from langchain_llm_toolkit import LLMIntegration
 
-                    st.session_state.llm = LLMIntegration()
-                    st.session_state.llm.set_model(st.session_state.model)
+                    st.session_state.llm = LLMIntegration(timeout=120)
 
+                st.session_state.llm.set_model(st.session_state.model)
                 enhanced_prompt = prompt
 
                 if st.session_state.with_memory:
@@ -171,7 +171,7 @@ def memory_page():
                         vector_store_type="faiss",
                         embedding_type="ollama",
                         embedding_model="nomic-embed-text",
-                        llm_model="ollama/gemma3",
+                        llm_model=st.session_state.get("model", "ollama/llama3.1:8b"),
                     )
 
                     document = Document(page_content=content, metadata=metadata)
@@ -255,7 +255,7 @@ def memory_page():
                             vector_store_type="faiss",
                             embedding_type="ollama",
                             embedding_model="nomic-embed-text",
-                            llm_model="ollama/gemma3",
+                            llm_model=st.session_state.get("model", "ollama/llama3.1:8b"),
                         )
                         rag_system.load_vector_store(str(MEMORY_STORE_PATH))
                         results = rag_system.retrieve_documents(query, k=5)

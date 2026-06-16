@@ -26,6 +26,7 @@ dependencies = [
     "rich>=13.0.0",
     "python-dotenv>=1.0.0",
     "litellm>=1.0.0",
+    "langchain-llm-toolkit",
 ]
 
 [project.optional-dependencies]
@@ -91,5 +92,11 @@ disallow_untyped_defs = false
 
 [tool.uv.sources]
 investkit-utils = { workspace = true }
+langchain-llm-toolkit = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "streamlit>=1.58.0",
+]
 
 
