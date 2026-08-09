@@ -254,3 +254,10 @@ MIT License
 ---
 
 **Lobster** - 为 OpenClaw 龙虾助理提供强大工具支持！🦞
+
+---
+
+## 相关文章
+
+- 中文: [Lobster：AI 工具服务器架构](https://erishen.cn/building-ai-tool-server-lobster-architecture-cn/)
+- English: [Lobster: AI Tool Server Architecture](https://erishen.cn/building-ai-tool-server-lobster-architecture/)
