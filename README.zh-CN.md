@@ -258,6 +258,4 @@ MIT License
 ---
 
 ## 相关文章
-
-- 中文: [Lobster：AI 工具服务器架构](https://erishen.cn/building-ai-tool-server-lobster-architecture-cn/)
-- English: [Lobster: AI Tool Server Architecture](https://erishen.cn/building-ai-tool-server-lobster-architecture/)
+- [给 AI 助手搭一个工具服务器：Lobster 的架构思路](https://erishen.cn/building-ai-tool-server-lobster-architecture-cn/)
