@@ -93,3 +93,4 @@ lobster_backup_*.json
 
 # Local config
 *.local
+.serena
