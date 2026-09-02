@@ -103,8 +103,8 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 
 [tool.uv.sources]
-investkit-utils = { git = "https://github.com/erishen/investkit_utils.git" }
-langchain-llm-toolkit = { git = "https://github.com/erishen/langchain-llm-toolkit.git" }
+investkit-utils = { workspace = true }
+langchain-llm-toolkit = { workspace = true }
 
 [dependency-groups]
 dev = [
