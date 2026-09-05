@@ -12,6 +12,18 @@ from lobster.core.llm_client import (
 )
 
 
+def _http_response(content: str) -> MagicMock:
+    """构造 llm_client 期望的 HTTP 响应：200 + {"response": ...}
+
+    客户端已从 litellm 改为直连 langchain-llm-toolkit 的 HTTP 接口，
+    mock 也跟着从 litellm.completion 换成 requests.post。
+    """
+    response = MagicMock()
+    response.status_code = 200
+    response.json.return_value = {"response": content}
+    return response
+
+
 class TestConversationManager:
     """测试对话管理器"""
 
@@ -143,41 +155,31 @@ class TestEnhancedLLMClient:
         assert client.enable_cache is False
         assert client.cache is None
 
-    @patch("lobster.core.llm_client.litellm.completion")
-    def test_generate(self, mock_completion):
+    @patch("lobster.core.llm_client.requests.post")
+    def test_generate(self, mock_post):
         """测试生成文本"""
-        # Mock 响应
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "测试回答"
-        mock_completion.return_value = mock_response
+        mock_post.return_value = _http_response("测试回答")
 
         client = EnhancedLLMClient(enable_cache=False)
         result = client.generate("测试问题")
 
         assert result == "测试回答"
-        mock_completion.assert_called_once()
+        mock_post.assert_called_once()
 
-    @patch("lobster.core.llm_client.litellm.completion")
-    def test_generate_with_system_prompt(self, mock_completion):
+    @patch("lobster.core.llm_client.requests.post")
+    def test_generate_with_system_prompt(self, mock_post):
         """测试带系统提示的生成"""
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "回答"
-        mock_completion.return_value = mock_response
+        mock_post.return_value = _http_response("回答")
 
         client = EnhancedLLMClient(enable_cache=False)
         result = client.generate("问题", system_prompt="你是一个助手")
 
         assert result == "回答"
 
-    @patch("lobster.core.llm_client.litellm.completion")
-    def test_chat(self, mock_completion):
+    @patch("lobster.core.llm_client.requests.post")
+    def test_chat(self, mock_post):
         """测试多轮对话"""
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "回复"
-        mock_completion.return_value = mock_response
+        mock_post.return_value = _http_response("回复")
 
         client = EnhancedLLMClient(enable_cache=False)
 
@@ -191,13 +193,10 @@ class TestEnhancedLLMClient:
         assert response2 == "回复"
         assert len(client.conversation.history) == 4
 
-    @patch("lobster.core.llm_client.litellm.completion")
-    def test_batch_generate(self, mock_completion):
+    @patch("lobster.core.llm_client.requests.post")
+    def test_batch_generate(self, mock_post):
         """测试批量生成"""
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "回答"
-        mock_completion.return_value = mock_response
+        mock_post.return_value = _http_response("回答")
 
         client = EnhancedLLMClient(enable_cache=False)
         prompts = ["问题1", "问题2", "问题3"]
@@ -206,7 +205,7 @@ class TestEnhancedLLMClient:
 
         assert len(results) == 3
         assert all(r == "回答" for r in results)
-        assert mock_completion.call_count == 3
+        assert mock_post.call_count == 3
 
     def test_clear_conversation(self):
         """测试清空对话"""
@@ -232,16 +231,16 @@ class TestEnhancedLLMClient:
 class TestGetLLMClient:
     """测试获取 LLM 客户端"""
 
-    @patch("lobster.core.config.ConfigManager")
-    def test_get_llm_client_default(self, mock_config):
-        """测试获取默认客户端"""
-        mock_config_instance = MagicMock()
-        mock_config_instance.get.return_value = "ollama/gemma3"
-        mock_config.return_value = mock_config_instance
+    def test_get_llm_client_default(self, monkeypatch):
+        """测试获取默认客户端：未设 AI_MODEL 时回落到内置默认模型"""
+        monkeypatch.delenv("AI_MODEL", raising=False)
 
         client = get_llm_client()
 
-        assert client.model == "ollama/gemma3"
+        assert client.model == "deepseek-chat"
+
+        monkeypatch.setenv("AI_MODEL", "ollama/gemma3")
+        assert get_llm_client().model == "ollama/gemma3"
 
     @patch("lobster.core.config.ConfigManager")
     def test_get_llm_client_custom_model(self, mock_config):

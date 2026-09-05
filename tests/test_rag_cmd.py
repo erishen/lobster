@@ -135,7 +135,7 @@ class TestRAGAPIURL:
     """测试 RAG API URL"""
 
     def test_default_api_url(self):
-        """测试默认 API URL"""
+        """测试默认 API URL：env 未设置时回落到托管的 langchain-llm-toolkit 服务"""
         from lobster.commands.rag_cmd import RAG_API_URL
 
-        assert os.environ.get("RAG_API_URL", "http://localhost:8000") == RAG_API_URL
+        assert os.environ.get("RAG_API_URL", "https://langchain-llm-toolkit.onrender.com") == RAG_API_URL
