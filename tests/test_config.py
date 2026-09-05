@@ -2,12 +2,16 @@
 
 
 def test_config_creation():
-    """Test creating a configuration"""
+    """Test creating a configuration
+
+    用 _env_loaded=True 跳过 env/.env 加载，断言的是 dataclass 硬编码默认值；
+    否则开发者本机的 DATA_MODE=real 会泄漏进测试（CI 上就挂）。
+    """
     from lobster.core.config import LobsterConfig
 
-    config = LobsterConfig()
+    config = LobsterConfig(_env_loaded=True)
 
-    assert config.data_mode == "real"
+    assert config.data_mode == "sample"
     assert config.ai_model == "deepseek-chat"
     assert config.api_cache_ttl == 60
     assert config.ai_cache_ttl == 3600
@@ -27,13 +31,23 @@ def test_config_custom_values():
     assert config.api_cache_ttl == 120
 
 
-def test_config_manager():
-    """Test configuration manager"""
-    from lobster.core.config import ConfigManager
+def test_config_manager(monkeypatch):
+    """Test configuration manager
+
+    替换模块级单例为干净实例，避免本机 env/.env 的 DATA_MODE 泄漏。
+    注意 `from lobster.core import config` 会被包 __init__ 导出的实例遮蔽，
+    必须经 sys.modules 拿到真正的 config 模块再打补丁。
+    """
+    import sys
+
+    from lobster.core.config import ConfigManager, LobsterConfig
+
+    config_mod = sys.modules["lobster.core.config"]
+    monkeypatch.setattr(config_mod, "config", LobsterConfig(_env_loaded=True))
 
     manager = ConfigManager()
 
-    assert manager.data_mode == "real"
+    assert manager.data_mode == "sample"
     assert manager.ai_model == "deepseek-chat"
 
     manager.set("data_mode", "sample")
