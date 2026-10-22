@@ -94,3 +94,11 @@ lobster_backup_*.json
 # Local config
 *.local
 .serena
+
+# Local editor / agent tooling config — keep local-only, never commit
+.vscode/
+.claude/
+.trae/
+.agents/
+.codex/
+.cursor/
