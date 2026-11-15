@@ -26,7 +26,9 @@ uv pip install -e ".[dev]"
 
 # Optional extras
 pip install -e ".[api]"          # API server
-pip install -e ".[serena]"       # Serena code analysis
+# Serena code analysis: not a pip extra (pins pydantic==2.12.5, conflicts with
+# langchain-llm-toolkit). Point SERENA_DIR at a serena checkout instead:
+#   export SERENA_DIR=/path/to/serena
 pip install -e ".[investment]"   # Investment tools
 pip install -e ".[all]"          # Everything
 ```
